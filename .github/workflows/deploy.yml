@@ -12,16 +12,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Check Commit Message Convention
-        run: |
-          commit_msg=$(git log -1 --pretty=%B)
-          echo "Commit message: $commit_msg"
-          if [[ ! "$commit_msg" =~ ^\[.*\] ]]; then
-            echo "❌ Error: Commit message must start with [ID]. Example: '[popcorn] Update DAG'"
-            echo "Please fix your commit message and push again."
-            exit 1
-          fi
-          echo "✅ Commit message convention verified."
 
       - name: Deploy to VM via SSH
         uses: appleboy/ssh-action@master

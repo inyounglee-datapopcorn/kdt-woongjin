@@ -1,4 +1,5 @@
 import pendulum
+from datetime import timedelta
 from airflow import DAG
 from airflow.providers.smtp.operators.smtp import EmailOperator
 """
