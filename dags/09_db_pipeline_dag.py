@@ -4,11 +4,11 @@ import pandas as pd
 from airflow import DAG
 from airflow.decorators import task
 from airflow.operators.python import get_current_context
-from airflow.providers.mysql.hooks.mysql import MySqlHook 
+from airflow.providers.postgres.hooks.postgres import PostgresHook 
 """
-API 호출을 통해 데이터를 가져와 MYSQL DB에 저장하는 파이프라인
+API 호출을 통해 데이터를 가져와 Supabase(Postgres) DB에 저장하는 파이프라인
 
-API → Pandas DataFrame → MYSQL Table
+API → Pandas DataFrame → Supabase Table
 """
 
 default_args = dict(
@@ -42,14 +42,16 @@ with DAG(
         batch_date = ctx['ds_nodash']
         
         df = pd.json_normalize(api_data)
-        df.drop('id', axis=1, inplace=True)
+        # uuid 컬럼이 있다면 제거 (Supabase 자동생성 등 고려)
+        # df.drop('id', axis=1, inplace=True) 
         df['created_at'] = batch_date
 
         return df
     
-    @task(task_id='dataframe_to_mysql')
-    def dataframe_to_mysql(df):
-        hook = MySqlHook(mysql_conn_id='mysql_connection')
+    @task(task_id='dataframe_to_postgres')
+    def dataframe_to_postgres(df):
+        # Supabase(Postgres) 연결 사용
+        hook = PostgresHook(postgres_conn_id='supabase_conn')
         conn = hook.get_sqlalchemy_engine()
         df.to_sql(
             'users', 
@@ -60,6 +62,6 @@ with DAG(
     
     api_data = get_api_data()
     df = api_to_dataframe(api_data)
-    dataframe_to_mysql(df)
+    dataframe_to_postgres(df)
 
 
