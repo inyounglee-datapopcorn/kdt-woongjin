@@ -11,11 +11,11 @@ from airflow.providers.smtp.operators.smtp import EmailOperator
     - Conn Id : gmail_connection
     - Host : smtp.gmail.com
     - Login : 개인 Gmail 주소
-    - Port : 587
+    - Port : 465
     - Password : 앱 비밀번호(16자리)
     - Extra Fields :
         - From email : 이메일 발송자 주소
-        - Disable SSL : 체크
+        - (Port 587 사용 시 'Disable SSL' 체크 필수)
 
 https://airflow.apache.org/docs/apache-airflow/2.2.0/_api/airflow/operators/email/index.html
 """
