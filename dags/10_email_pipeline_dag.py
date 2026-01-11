@@ -58,7 +58,7 @@ with DAG(
     send_email = EmailOperator(
         task_id='send_email',
         conn_id='gmail_connection',
-        to='hyunsooyein@gmail.com',
+        to='datapopcorn@gmail.com',
         subject='User Registered - {{ ds_nodash }}',
         html_content="{{ ti.xcom_pull(task_ids='extract_registered_user') }}",
     )
