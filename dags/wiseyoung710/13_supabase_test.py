@@ -32,5 +32,5 @@ with DAG(
             VALUES ('Hello from Airflow! Supabase Connection SUCCESS :)');
         """
     )
-
+    # dag 실행 순서 정의
     create_table >> insert_data
