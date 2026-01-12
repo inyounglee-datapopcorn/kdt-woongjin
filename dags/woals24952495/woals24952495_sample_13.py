@@ -2,7 +2,7 @@ from airflow import DAG
 from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 import pendulum
 
-# Define the DAG
+# Define the DAG 
 with DAG(
     dag_id='woals24952495_sample_13',
     start_date=pendulum.today('UTC').add(days=-1),
@@ -26,7 +26,7 @@ with DAG(
     # 2. Insert test data
     insert_data = SQLExecuteQueryOperator(
         task_id='insert_data',
-        conn_id='supabase_conn',
+        conn_id='jaemin1077_supabase_conn',
         sql="""
             INSERT INTO airflow_test_table (message) 
             VALUES ('Hello from Airflow! Supabase Connection SUCCESS :)');

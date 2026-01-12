@@ -4,7 +4,7 @@ import pendulum
 
 # Define the DAG
 with DAG(
-    dag_id='xoosl033110_supabase_test_dag',
+    dag_id='kate29397_supabase_test_dag',
     start_date=pendulum.today('UTC').add(days=-1),
     schedule='0 0 * * *',
     catchup=False,
@@ -13,7 +13,7 @@ with DAG(
     # 1. Create a test table
     create_table = SQLExecuteQueryOperator(
         task_id='create_table',
-        conn_id='xoosl033110_supabase_conn',
+        conn_id='kate29397_supabase_conn',
         sql="""
             CREATE TABLE IF NOT EXISTS airflow_test_table (
                 id SERIAL PRIMARY KEY,
@@ -26,7 +26,7 @@ with DAG(
     # 2. Insert test data
     insert_data = SQLExecuteQueryOperator(
         task_id='insert_data',
-        conn_id='xoosl033110_supabase_conn',
+        conn_id='kate29397_supabase_conn',
         sql="""
             INSERT INTO airflow_test_table (message) 
             VALUES ('Hello from Airflow! Supabase Connection SUCCESS :)');
