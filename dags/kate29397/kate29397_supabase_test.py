@@ -2,6 +2,9 @@ from airflow import DAG
 from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 import pendulum
 
+# Triggering a new push record
+
+
 # Define the DAG
 with DAG(
     dag_id='kate29397_supabase_test_dag',
