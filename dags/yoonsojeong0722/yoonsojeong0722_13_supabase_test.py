@@ -32,6 +32,6 @@ with DAG(
             INSERT INTO yoonsojeong0722_airflow_test_table (message) 
             VALUES ('Hello from Airflow! Supabase Connection SUCCESS :)');
         """
-    )
+    )   
 
     create_table >> insert_data
