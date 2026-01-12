@@ -4,7 +4,7 @@ import pendulum
 
 # Define the DAG
 with DAG(
-    dag_id='cometj456_supabase_test_dag',
+    dag_id='cometj456_supabase_test_dag_v2',
     start_date=pendulum.today('Asia/Seoul').add(days=-1), # 한국 시간 기준
     schedule='0 0 * * *',
     catchup=False,
