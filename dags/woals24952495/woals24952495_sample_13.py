@@ -23,7 +23,7 @@ with DAG(
         """
     )
 
-    # 2. Insert test data
+    # 2. Insert test data 
     insert_data = SQLExecuteQueryOperator(
         task_id='insert_data',
         conn_id='jaemin1077_supabase_conn',
