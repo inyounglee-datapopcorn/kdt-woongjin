@@ -6,7 +6,7 @@ default_args = dict(
     owner = 'woals24952495', # 개별 DAG 관리자
     email = ['woals24952495@gmail.com'],
     email_on_failure = False,
-    retries = 3
+    retries = 3 
     )
 
 with DAG(
