@@ -13,7 +13,7 @@ with DAG(
     # 1. Create a test table
     create_table = SQLExecuteQueryOperator(
         task_id='create_table',
-        conn_id='supabase_conn',
+        conn_id='tjgk1203_supabase_conn',
         sql="""
             CREATE TABLE IF NOT EXISTS airflow_test_table (
                 id SERIAL PRIMARY KEY,
@@ -26,7 +26,7 @@ with DAG(
     # 2. Insert test data
     insert_data = SQLExecuteQueryOperator(
         task_id='insert_data',
-        conn_id='supabase_conn',
+        conn_id='tjgk1203_supabase_conn',
         sql="""
             INSERT INTO airflow_test_table (message) 
             VALUES ('Hello from Airflow! Supabase Connection SUCCESS :)');
