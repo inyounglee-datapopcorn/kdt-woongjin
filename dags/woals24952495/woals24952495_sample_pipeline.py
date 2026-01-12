@@ -37,7 +37,7 @@ with DAG(
     dag_id='woals24952495_sample_pipeline',  # ✅ 폴더명이 포함됨
     default_args=default_args,
     description='Sample DAG for woals24952495',
-    schedule_interval=None,  # 수동 실행만 허용
+    schedule=None,  # 수동 실행만 허용
     catchup=False,
     tags=['woals24952495', 'sample', 'tutorial'],
 ) as dag:

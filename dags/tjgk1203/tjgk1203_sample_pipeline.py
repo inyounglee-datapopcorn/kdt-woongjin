@@ -37,7 +37,7 @@ with DAG(
     dag_id='tjgk1203_sample_pipeline',  # ✅ 폴더명이 포함됨
     default_args=default_args,
     description='Sample DAG for tjgk1203',
-    schedule_interval=None,  # 수동 실행만 허용
+    schedule=None,  # 수동 실행만 허용
     catchup=False,
     tags=['tjgk1203', 'sample', 'tutorial'],
 ) as dag:

@@ -37,7 +37,7 @@ with DAG(
     dag_id='kate29397_sample_pipeline',  # ✅ 폴더명이 포함됨
     default_args=default_args,
     description='Sample DAG for kate29397',
-    schedule_interval=None,  # 수동 실행만 허용
+    schedule=None,  # 수동 실행만 허용
     catchup=False,
     tags=['kate29397', 'sample', 'tutorial'],
 ) as dag:
