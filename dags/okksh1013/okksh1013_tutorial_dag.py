@@ -10,7 +10,7 @@ default_args = dict(
     )
 
 with DAG(
-    dag_id="okksh1013_01_tutorial_dag",
+    dag_id="okksh1013_tutorial_dag",
     start_date=pendulum.datetime(2025, 8, 1, tz='Asia/Seoul'),
     schedule="30 10 * * *", # cron 표현식
     default_args = default_args,
