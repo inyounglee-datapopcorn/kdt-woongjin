@@ -26,7 +26,7 @@ with DAG(
     # 2. Insert test data
     insert_data = SQLExecuteQueryOperator(
         task_id='insert_data',
-        conn_id='supabase_conn',
+        conn_id='xoosl033110_supabase_conn',
         sql="""
             INSERT INTO airflow_test_table (message) 
             VALUES ('Hello from Airflow! Supabase Connection SUCCESS :)');
