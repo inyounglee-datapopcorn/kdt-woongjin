@@ -9,7 +9,7 @@ with DAG(
     schedule='0 0 * * *',
     catchup=False,
 ) as dag:
- 
+
     # 1. Create a test table
     create_table = SQLExecuteQueryOperator(
         task_id='create_table',
@@ -26,7 +26,7 @@ with DAG(
     # 2. Insert test data
     insert_data = SQLExecuteQueryOperator(
         task_id='insert_data',
-        conn_id='supabase_conn',
+        conn_id='jaemin1077_supabase_conn',
         sql="""
             INSERT INTO airflow_test_table (message) 
             VALUES ('Hello from Airflow! Supabase Connection SUCCESS :)');
