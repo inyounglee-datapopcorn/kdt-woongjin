@@ -10,7 +10,7 @@ with DAG(
     catchup=False,
 ) as dag:
 
-    # 1. Create a test table
+    # 1. Create a test table 
     create_table = SQLExecuteQueryOperator(
         task_id='create_table',
         conn_id='jaemin1077_supabase_conn',
@@ -23,7 +23,7 @@ with DAG(
         """
     )
 
-    # 2. Insert test data
+    # 2. Insert test data 
     insert_data = SQLExecuteQueryOperator(
         task_id='insert_data',
         conn_id='jaemin1077_supabase_conn',
