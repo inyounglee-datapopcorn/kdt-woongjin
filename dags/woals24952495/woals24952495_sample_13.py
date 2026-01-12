@@ -4,7 +4,7 @@ import pendulum
 
 # Define the DAG 
 with DAG(
-    dag_id='woals24952495_sample_13', 
+    dag_id='woals24952495_sample_13',
     start_date=pendulum.today('UTC').add(days=-1),
     schedule='0 0 * * *',
     catchup=False,
