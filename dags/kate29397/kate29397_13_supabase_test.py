@@ -4,7 +4,7 @@ import pendulum
 
 # Define the DAG
 with DAG(
-    dag_id='kate29397_13_supabase_test_dag',
+    dag_id='kate29397_supabase_test_dag',
     start_date=pendulum.today('UTC').add(days=-1),
     schedule='0 0 * * *',
     catchup=False,

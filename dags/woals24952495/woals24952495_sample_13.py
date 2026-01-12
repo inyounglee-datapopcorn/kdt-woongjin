@@ -2,7 +2,7 @@ from airflow import DAG
 from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 import pendulum
 
-# Define the DAG
+# Define the DAG 
 with DAG(
     dag_id='woals24952495_sample_13', 
     start_date=pendulum.today('UTC').add(days=-1),
