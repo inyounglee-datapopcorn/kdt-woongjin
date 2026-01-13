@@ -3,6 +3,7 @@ import requests
 import pendulum
 from airflow import DAG
 from airflow.decorators import task
+from airflow.providers.slack.operators.slack import SlackAPIPostOperator
 from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 from airflow.providers.postgres.hooks.postgres import PostgresHook 
 
