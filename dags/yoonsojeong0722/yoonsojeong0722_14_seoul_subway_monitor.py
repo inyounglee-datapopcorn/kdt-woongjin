@@ -33,7 +33,7 @@ with DAG(
     # 1. 테이블 생성 (없을 경우)
     create_table = SQLExecuteQueryOperator(
         task_id='create_table',
-        conn_id='supabase_conn',
+        conn_id='supabase_conn',  
         sql="""
             CREATE TABLE IF NOT EXISTS realtime_subway_positions (  
                 id SERIAL PRIMARY KEY,
