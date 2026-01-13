@@ -2,22 +2,22 @@ import logging
 import requests
 import pendulum
 from airflow import DAG
-from airflow.sdk import task
+from airflow.decorators import task
 from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 from airflow.providers.postgres.hooks.postgres import PostgresHook 
 
 # Configuration
-SEOUL_API_KEY = "5a4c61745532696e393557726c696f"
+SEOUL_API_KEY = "716a654d46716f7835365268626a78"
 
 default_args = dict(
-    owner = 'datapopcorn',
-    email = ['datapopcorn@gmail.com'],
+    owner = 'qoxjf135',
+    email = ['qoxjf135@gmail.com'],
     email_on_failure = False,
     retries = 1
 )
 
 with DAG(
-    dag_id="popcorn_16_seoul_subway_stats",
+    dag_id="qoxjf135_seoul_subway_stats",
     start_date=pendulum.datetime(2025, 1, 1, tz='Asia/Seoul'), # 데이터가 있는 과거 시점 설정
     schedule="0 10 * * *",  # 매일 오전 10시 실행 (전일 데이터 집계)
     catchup=False,
@@ -28,7 +28,7 @@ with DAG(
     # 1. 테이블 생성
     create_table = SQLExecuteQueryOperator(
         task_id='create_table',
-        conn_id='supabase_conn',
+        conn_id='qoxjf135_supabase_conn',
         sql="""
             CREATE TABLE IF NOT EXISTS daily_subway_stats (
                 id SERIAL PRIMARY KEY,
@@ -46,7 +46,7 @@ with DAG(
     # 2. 일별 승하차 인원 수집 (최근 데이터)
     @task(task_id='fetch_daily_stats')
     def fetch_daily_stats():
-        hook = PostgresHook(postgres_conn_id='supabase_conn')
+        hook = PostgresHook(postgres_conn_id='qoxjf135_supabase_conn')
         conn = hook.get_sqlalchemy_engine()
         
         # 일반적으로 3일 전 데이터가 최신일 수 있음. 안전하게 2024년 12월 1일로 하드코딩 테스트하거나, 동적 날짜 사용.

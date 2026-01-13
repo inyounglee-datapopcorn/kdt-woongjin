@@ -2,12 +2,12 @@ import logging
 import requests
 import pendulum
 from airflow import DAG
-from airflow.sdk import task
+from airflow.decorators import task
 from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 from airflow.providers.postgres.hooks.postgres import PostgresHook 
 
 # Configuration
-SEOUL_API_KEY = "5a4c61745532696e393557726c696f"
+SEOUL_API_KEY = "716a654d46716f7835365268626a78"
 
 # 주요 환승역 및 거점 역 (전체 역 조회 시 API 과부하 방지를 위해 주요 역 우선 수집)
 TARGET_STATIONS = [
@@ -16,14 +16,14 @@ TARGET_STATIONS = [
 ]
 
 default_args = dict(
-    owner = 'datapopcorn',
-    email = ['datapopcorn@gmail.com'],
+    owner = 'qoxjf135',
+    email = ['qoxjf135@gmail.com'],
     email_on_failure = False,
     retries = 1
 )
 
 with DAG(
-    dag_id="popcorn_15_seoul_subway_arrival",
+    dag_id="qoxjf135_seoul_subway_arrival",
     start_date=pendulum.today('Asia/Seoul').add(days=-1),
     schedule="*/5 * * * *",  # 5분마다 실행
     catchup=False,
@@ -34,7 +34,7 @@ with DAG(
     # 1. 테이블 생성
     create_table = SQLExecuteQueryOperator(
         task_id='create_table',
-        conn_id='teampopcorn_supabase_conn',
+        conn_id='qoxjf135_supabase_conn',
         sql="""
             CREATE TABLE IF NOT EXISTS realtime_subway_arrivals (
                 id SERIAL PRIMARY KEY,
@@ -52,7 +52,7 @@ with DAG(
     # 2. 데이터 수집 -> 적재
     @task(task_id='fetch_and_insert_arrivals')
     def fetch_and_insert_arrivals():
-        hook = PostgresHook(postgres_conn_id='teampopcorn_supabase_conn')
+        hook = PostgresHook(postgres_conn_id='qoxjf135_supabase_conn')
         conn = hook.get_sqlalchemy_engine()
         all_records = []
 

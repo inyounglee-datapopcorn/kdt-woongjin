@@ -5,6 +5,7 @@ from airflow import DAG
 from airflow.decorators import task
 from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 from airflow.providers.postgres.hooks.postgres import PostgresHook 
+from airflow.providers.slack.operators.slack_webhook import SlackWebhookOperator
 
 # Configuration
 SEOUL_API_KEY = "434459696c6f6b6b3130347378545273"  # 실제 운영 시 Variable이나 Connection으로 관리 권장
@@ -33,7 +34,7 @@ with DAG(
     # 1. 테이블 생성 (없을 경우)
     create_table = SQLExecuteQueryOperator(
         task_id='create_table',
-        conn_id='supabase_conn',
+        conn_id='okksh1013_supabase_conn',
         sql="""
             CREATE TABLE IF NOT EXISTS realtime_subway_positions (
                 id SERIAL PRIMARY KEY,
@@ -58,7 +59,7 @@ with DAG(
     # 2. 데이터 수집 및 적재 태스크
     @task(task_id='collect_and_insert_subway_data')
     def collect_and_insert_subway_data():
-        hook = PostgresHook(postgres_conn_id='okksh1013supabase_conn')
+        hook = PostgresHook(postgres_conn_id='okksh1013_supabase_conn')
         conn = hook.get_sqlalchemy_engine()
         
         all_records = []
@@ -114,9 +115,20 @@ with DAG(
                 method='multi' # 성능 향상을 위해 multi insert
             )
             logging.info("Insert completed.")
+            return len(all_records)
         else:
             logging.info("No records to insert.")
+            return 0
 
     ingestion_task = collect_and_insert_subway_data()
 
-    create_table >> ingestion_task
+    send_slack = SlackWebhookOperator(
+        task_id='send_slack_notification',
+        slack_webhook_conn_id='sny_bot',
+        message=":subway: *서울 지하철 실시간 모니터링 알림*\n"
+                "- 실행 일시: {{ ts }}\n"
+                "- 적재 결과: 성공\n"
+                "- 적재 건수: {{ ti.xcom_pull(task_ids='collect_and_insert_subway_data') }}건",
+    )
+
+    create_table >> ingestion_task >> send_slack
