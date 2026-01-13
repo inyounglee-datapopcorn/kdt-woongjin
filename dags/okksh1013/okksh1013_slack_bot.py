@@ -3,16 +3,22 @@ from airflow.providers.slack.operators.slack import SlackAPIPostOperator
 import pendulum
 
 with DAG(
-    dag_id='purple45663_12_2_slack_api_test_dag',
+    dag_id='okksh1013_slack_api_test_dag',
     start_date=pendulum.today('UTC').add(days=-1),
     schedule='0 0 * * *',
     catchup=False,
-    tags=['purple45663', 'slack', 'api'],
+    tags=['okksh1013', 'slack', 'api'],
 ) as dag:
 
+    # 주의: 슬랙 앱(Bot)을 해당 채널에 먼저 초대해야 메시지 전송이 가능합니다.
+    # 예: 채널에서 '/invite @App_Name' 입력
     send_slack = SlackAPIPostOperator(
         task_id='send_slack_message_api',
-        slack_conn_id='purple45663_slack_conn',
+        slack_conn_id='okksh1013_slack_conn',
         channel='#bot-playground',  # 보낼 채널명을 입력하세요 (예: #general)
-        text=':rocket: Airflow -> Slack API (Token) 연결 성공! purple45663 테스트 DAG입니다.',
+        text=':rocket: Airflow -> Slack API (Token) 연결 성공! sny DAG입니다.',
+
+
+
     )
+    
