@@ -133,4 +133,4 @@ with DAG(
               "- 적재된 레코드 수: {{ task_instance.xcom_pull(task_ids='collect_and_insert_subway_data') }}개\n",
          username='웅진소정봇'
      )
-      ingestion_task >> send_slack
+      ingestion_task >> send_slack.   
