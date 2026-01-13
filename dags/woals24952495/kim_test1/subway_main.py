@@ -101,8 +101,7 @@ with DAG(
     # 2단계: Supabase DB에 최종 적재
     task_load = PythonOperator(
         task_id='load_to_db',
-        python_callable=load_data_to_db,
-        provide_context=True
+        python_callable=load_data_to_db
     )
 
     # 작업 순서 정의 (수집 -> 적재)
