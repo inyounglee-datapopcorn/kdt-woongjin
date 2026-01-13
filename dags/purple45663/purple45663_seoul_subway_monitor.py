@@ -12,7 +12,7 @@ SEOUL_API_KEY = "6e71466270636b733633654f6b4a7a"  # 실제 운영 시 Variable�
 TARGET_LINES = [
     "1호선", "2호선", "3호선", "4호선", "5호선", 
     "6호선", "7호선", "8호선", "9호선",
-    "경의중앙선", "공항철도", "수인분당선", "신분당선"
+    "경의중앙선", "공항철도", "수인분당선", "경춘선"
 ]
 
 default_args = dict(
@@ -25,7 +25,7 @@ default_args = dict(
 with DAG(
     dag_id="purple45663_seoul_subway_monitor",
     start_date=pendulum.today('Asia/Seoul').add(days=-1),
-    schedule="*/5 * * * *",  # 5분마다 실행
+    schedule="* * * * *",  # 1분마다 실행 (Airflow 최소 주기)
     catchup=False,
     default_args=default_args,
     tags=['subway', 'project', 'purple45663'],

@@ -5,6 +5,7 @@ from airflow import DAG
 from airflow.decorators import task
 from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 from airflow.providers.postgres.hooks.postgres import PostgresHook 
+from airflow.providers.slack.operators.slack import SlackAPIPostOperator
 
 # Configuration
 SEOUL_API_KEY = "634f415258736a653638734147456d"  # 실제 운영 시 Variable이나 Connection으로 관리 권장
@@ -32,10 +33,10 @@ with DAG(
 
     # 1. 테이블 생성 (없을 경우)
     create_table = SQLExecuteQueryOperator(
-        task_id='create_table',
-        conn_id='supabase_conn',
+        task_id='sj_create_table',
+        conn_id='supabase_conn',  
         sql="""
-            CREATE TABLE IF NOT EXISTS realtime_subway_positions (
+            CREATE TABLE IF NOT EXISTS realtime_subway_positions_v2 (  
                 id SERIAL PRIMARY KEY,
                 line_id VARCHAR(100),
                 line_name VARCHAR(100),
@@ -56,14 +57,14 @@ with DAG(
     )
 
     # 2. 데이터 수집 및 적재 태스크
-    @task(task_id='collect_and_insert_subway_data')
+    @task(task_id='sj_collect_and_insert_subway_data')
     def collect_and_insert_subway_data():
         hook = PostgresHook(postgres_conn_id='sojeong_supabase_conn')
         conn = hook.get_sqlalchemy_engine()
         
         all_records = []
         
-        for line in TARGET_LINES:
+        for line in TARGET_LINES:  
             try:
                 # API 호출
                 url = f"http://swopenapi.seoul.go.kr/api/subway/{SEOUL_API_KEY}/json/realtimePosition/1/100/{line}"
@@ -107,7 +108,7 @@ with DAG(
             import pandas as pd
             df = pd.DataFrame(all_records)
             df.to_sql(
-                'realtime_subway_positions',
+                'realtime_subway_positions_v2',
                 con=conn,
                 if_exists='append',
                 index=False,
@@ -116,7 +117,24 @@ with DAG(
             logging.info("Insert completed.")
         else:
             logging.info("No records to insert.")
+        
+        return len(all_records)
 
-    ingestion_task = collect_and_insert_subway_data()
+    ingestion_task = collect_and_insert_subway_data()  
 
     create_table >> ingestion_task
+
+
+    # 3. 슬랙 알림 태스크
+
+    send_slack_notification = SlackAPIPostOperator(
+         task_id='sj_send_slack_notification',
+         slack_conn_id='sojeong_slack_conn',
+         channel='#bot-playground',
+         text=":white_check_mark: *지하철 데이터 적재 완료 >.< *\n"
+              "- 대상 테이블: `realtime_subway_positions_v2`\n"
+              "- 적재된 레코드 수: {{ task_instance.xcom_pull(task_ids='collect_and_insert_subway_data') }}개\n",
+         username='웅진소정봇'
+     )
+    ingestion_task >> send_slack_notification
+      
