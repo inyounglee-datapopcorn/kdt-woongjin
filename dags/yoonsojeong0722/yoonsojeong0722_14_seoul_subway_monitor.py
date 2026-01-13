@@ -122,11 +122,15 @@ with DAG(
 
     create_table >> ingestion_task
 
-    # 슬랙 알림 전송
-    send_slack = SlackAPIPostOperator(
-        task_id='sj_send_slack_message_api',
-        slack_conn_id='sojeong_supabase_conn',
-        channel='#bot-playground',
-        text='::서울 지하철 실시간 위치 추출 DAG가 성공적으로 실행되었습니다'
-    )
-    ingestion_task >> send_slack
+
+    # 2. 슬랙 알림 태스크
+    send_slack_notification = SlackAPIPostOperator(
+         task_id='sj_send_slack_notification',
+         slack_conn_id='sojeong_supabase_conn',
+         channel='#bot-playground',
+         text=":white_check_mark: *지하철 데이터 적재 완료 >.< *\n"
+              "- 대상 테이블: `realtime_subway_positions_v2`\n"
+              "- 적재된 레코드 수: {{ task_instance.xcom_pull(task_ids='collect_and_insert_subway_data') }}개\n",
+         username='웅진소정봇'
+     )
+      ingestion_task >> send_slack
