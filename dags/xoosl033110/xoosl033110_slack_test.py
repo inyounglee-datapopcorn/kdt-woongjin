@@ -10,8 +10,6 @@ with DAG(
     tags=['xoosl033110', 'slack', 'api'],
 ) as dag:
 
-    # 주의: 슬랙 앱(Bot)을 해당 채널에 먼저 초대해야 메시지 전송이 가능합니다.
-    # 예: 채널에서 '/invite @App_Name' 입력
     send_slack = SlackAPIPostOperator(
         task_id='send_slack_message_api',
         slack_conn_id='xoosl033110_slack_conn',

@@ -5,6 +5,7 @@ from airflow import DAG
 from airflow.decorators import task
 from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 from airflow.providers.postgres.hooks.postgres import PostgresHook 
+from airflow.providers.slack.operators.slack import SlackAPIPostOperator
 
 # Configuration
 SEOUL_API_KEY = "6e71466270636b733633654f6b4a7a"  # 실제 운영 시 Variable이나 Connection으로 관리 권장
@@ -24,7 +25,7 @@ default_args = dict(
 with DAG(
     dag_id="purple45663_seoul_subway_monitor",
     start_date=pendulum.today('Asia/Seoul').add(days=-1),
-    schedule=None, # "*/5 * * * *",  # 5분마다 실행
+    schedule="*/5 * * * *",  # 5분마다 실행
     catchup=False,
     default_args=default_args,
     tags=['subway', 'project', 'purple45663'],
@@ -94,4 +95,14 @@ with DAG(
 
     ingestion_task = collect_and_insert_subway_data()
 
-    ingestion_task
+    # 주의: 슬랙 앱(Bot)을 해당 채널에 먼저 초대해야 메시지 전송이 가능합니다.
+    # 예: 채널에서 '/invite @App_Name' 입력
+    send_slack_failure = SlackAPIPostOperator(
+        task_id='send_slack_message_failure',
+        slack_conn_id='purple45663_slack_conn',
+        channel='#bot-playground',
+        text=':rotating_light: [데이터 적재 실패] seoul_subway_monitor DAG에서 에러가 발생했습니다.',
+        trigger_rule='one_failed'  # 앞의 태스크가 하나라도 실패하면 실행
+    )
+
+    ingestion_task >> send_slack_failure

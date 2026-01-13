@@ -4,7 +4,7 @@ import shutil
 import pendulum
 import pandas as pd
 from airflow import DAG
-from airflow.decorators import task
+from airflow.sdk import task
 from airflow.providers.postgres.hooks.postgres import PostgresHook 
 
 default_args = dict(
