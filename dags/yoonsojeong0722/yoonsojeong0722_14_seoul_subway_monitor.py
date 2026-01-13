@@ -33,9 +33,9 @@ with DAG(
     # 1. 테이블 생성 (없을 경우)
     create_table = SQLExecuteQueryOperator(
         task_id='create_table',
-        conn_id='supabase_conn',
+        conn_id='supabase_conn',  
         sql="""
-            CREATE TABLE IF NOT EXISTS realtime_subway_positions (
+            CREATE TABLE IF NOT EXISTS realtime_subway_positions (  
                 id SERIAL PRIMARY KEY,
                 line_id VARCHAR(100),
                 line_name VARCHAR(100),
@@ -63,7 +63,7 @@ with DAG(
         
         all_records = []
         
-        for line in TARGET_LINES:
+        for line in TARGET_LINES:  
             try:
                 # API 호출
                 url = f"http://swopenapi.seoul.go.kr/api/subway/{SEOUL_API_KEY}/json/realtimePosition/1/100/{line}"
