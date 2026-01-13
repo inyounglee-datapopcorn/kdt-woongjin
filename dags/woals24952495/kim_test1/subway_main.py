@@ -7,17 +7,15 @@ import requests
 import logging
 
 # [핵심 로직 1] API 수집 및 데이터 변환 (재민님의 16개 호선 황금 리스트 반영)
-def fetch_and_transform_subway_data():
-    # 전문가 방식: Airflow Variable에서 API 키를 안전하게 가져옵니다.
-    # 키 이름: kjm_subway_api_key (Admin -> Variables에 등록 필수)
-    api_key = Variable.get("kjm_subway_api_key", default_var="sample")
+def fetch_and_transform_subway_data(api_key):
+    # Jinja 템플릿을 통해 전달받은 api_key를 사용합니다. (UI의 Rendered 탭에서 확인 가능)
     
     # 1호선~9호선 + 경의중앙, 공항철도, 경춘, 수인분당, 신분당, 우이신설, GTX-A
     target_lines = [
         "1호선", "2호선", "3호선", "4호선", "5호선", "6호선", "7호선", "8호선", "9호선",
         "경의중앙선", "공항철도", "경춘선", "수인분당선", "신분당선", "우이신설선", "GTX-A"
     ]
-    
+      
     all_transformed_rows = []
 
     for line in target_lines:
@@ -95,14 +93,14 @@ with DAG(
     # 1단계: 모든 호선 데이터 수집 및 변환
     task_fetch = PythonOperator(
         task_id='fetch_and_transform',
-        python_callable=fetch_and_transform_subway_data
+        python_callable=fetch_and_transform_subway_data,
+        op_kwargs={'api_key': '{{ var.value.kjm_subway_api_key }}'}
     )
 
     # 2단계: Supabase DB에 최종 적재
     task_load = PythonOperator(
         task_id='load_to_db',
-        python_callable=load_data_to_db,
-        provide_context=True
+        python_callable=load_data_to_db
     )
 
     # 작업 순서 정의 (수집 -> 적재)
