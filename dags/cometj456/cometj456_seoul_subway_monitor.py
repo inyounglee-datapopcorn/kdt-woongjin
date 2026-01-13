@@ -35,7 +35,7 @@ with DAG(
     schedule="*/30 * * * *",  # 5분마다 실행
     catchup=False,
     default_args=default_args,
-    tags=['subway', 'project'],
+    tags=['subway', 'project','slack'],
 ) as dag:
 
     # 1. 테이블 생성 (없을 경우)
@@ -141,4 +141,4 @@ with DAG(
        
     ingestion_task = collect_and_insert_subway_data()
 
-    create_table >> ingestion_task >> send_slack_notification
+    ingestion_task >> send_slack_notification
