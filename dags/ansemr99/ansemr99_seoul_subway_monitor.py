@@ -3,7 +3,7 @@ import requests
 import pendulum
 from airflow import DAG
 from airflow.decorators import task
-from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
+from airflow.providers.slack.operators.slack import SlackAPIPostOperator
 from airflow.providers.postgres.hooks.postgres import PostgresHook 
 
 # Configuration
@@ -27,10 +27,10 @@ with DAG(
     schedule=None, # "*/5 * * * *",  # 5분마다 실행
     catchup=False,
     default_args=default_args,
-    tags=['subway', 'project'],
+    tags=['subway', 'project', 'slack'],
 ) as dag:
 
-    # 2. 데이터 수집 및 적재 태스크
+    # 1. 데이터 수집 및 적재 태스크
     @task(task_id='collect_and_insert_subway_data')
     def collect_and_insert_subway_data():
         hook = PostgresHook(postgres_conn_id='ansemr99_supabase_conn')
@@ -77,8 +77,9 @@ with DAG(
                 continue
                 
         # 일괄 적재
+        record_count = len(all_records)
         if all_records:
-            logging.info(f"Inserting total {len(all_records)} records into Supabase...")
+            logging.info(f"Inserting total {record_count} records into Supabase...")
             import pandas as pd
             df = pd.DataFrame(all_records)
             df.to_sql(
@@ -91,7 +92,21 @@ with DAG(
             logging.info("Insert completed.")
         else:
             logging.info("No records to insert.")
+        
+        return record_count
+
+    # 2. 슬랙 알림 태스크
+    send_slack_notification = SlackAPIPostOperator(
+        task_id='send_slack_notification',
+        slack_conn_id='ansemr99_slack_conn',
+        channel='#bot-playground',
+        text=":white_check_mark: *지하철 데이터 적재 완료*\n"
+             "- 대상 테이블: `realtime_subway_positions_2`\n"
+             "- 적재된 레코드 수: {{ task_instance.xcom_pull(task_ids='collect_and_insert_subway_data') }}개\n"
+             "- 실행 시각: {{ dag_run.logical_date.in_timezone('Asia/Seoul').strftime('%Y-%m-%d %H:%M:%S') }}",
+        username='승우봇'
+    )
 
     ingestion_task = collect_and_insert_subway_data()
 
-    ingestion_task
+    ingestion_task >> send_slack_notification
