@@ -82,7 +82,7 @@ with DAG(
             import pandas as pd
             df = pd.DataFrame(all_records)
             df.to_sql(
-                'realtime_subway_positions',
+                'realtime_subway',
                 con=conn,
                 if_exists='append',
                 index=False,
