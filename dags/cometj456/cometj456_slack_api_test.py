@@ -4,7 +4,7 @@ import pendulum
 
 with DAG(
     dag_id='cometj456_slack_api_test_dag',
-    start_date=pendulum.today('Asia/Seoul').add(days=-1), # 한국 시간 기준
+    start_date=pendulum.today('UTC').add(days=-1),
     schedule='0 0 * * *',
     catchup=False,
     tags=['cometj456', 'slack', 'api'],
