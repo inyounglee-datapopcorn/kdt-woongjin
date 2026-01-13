@@ -118,7 +118,7 @@ with DAG(
         else:
             logging.info("No records to insert.")
 
-    ingestion_task = collect_and_insert_subway_data()
+    ingestion_task = collect_and_insert_subway_data()  
 
     create_table >> ingestion_task
 
