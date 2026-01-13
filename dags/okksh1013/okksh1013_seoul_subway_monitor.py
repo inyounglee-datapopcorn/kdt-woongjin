@@ -58,7 +58,7 @@ with DAG(
     # 2. 데이터 수집 및 적재 태스크
     @task(task_id='collect_and_insert_subway_data')
     def collect_and_insert_subway_data():
-        hook = PostgresHook(postgres_conn_id='okksh1013supabase_conn')
+        hook = PostgresHook(postgres_conn_id='okksh1013_supabase_conn')
         conn = hook.get_sqlalchemy_engine()
         
         all_records = []
