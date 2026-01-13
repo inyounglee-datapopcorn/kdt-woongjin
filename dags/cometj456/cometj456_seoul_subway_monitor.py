@@ -173,15 +173,15 @@ with DAG(
     # 3) 슬랙 알림 태스크
     # =========================
     send_slack_notification_cometj456 = SlackAPIPostOperator(
-        task_id="send_slack_notification_cometj456",  # 태스크 ID
-        slack_conn_id=SLACK_CONN_ID,  # Slack 연결 ID
-        channel=SLACK_CHANNEL,  # 채널
-        username=SLACK_USERNAME,  # 발신자 표시명
-        text=(  # Slack 메시지 본문(Jinja 템플릿 포함 가능)
-            f":pet: *지하철 데이터 적재 완료*\n"  # 제목
-            f"- 대상 테이블: `{TABLE_NAME}`\n"  # 테이블명
-            "- 적재된 레코드 수: {{ task_instance.xcom_pull(task_ids='collect_and_insert_subway_data_v2')['inserted'] }}개\n"  # XCom inserted
-            "- 실행 시각(KST): {{ task_instance.xcom_pull(task_ids='collect_and_insert_subway_data_v2')['run_time_kst'] }}"  # XCom run_time_kst
+        task_id="send_slack_notification_cometj456",
+        slack_conn_id=SLACK_CONN_ID,
+        channel=SLACK_CHANNEL,
+        username=SLACK_USERNAME,
+        trigger_rule="one_failed",  # 상위 태스크 실패 시에만 실행
+        text=(
+            f":rotating_light: *지하철 데이터 적재 실패*\n"
+            f"- 대상 테이블: `{TABLE_NAME}`\n"
+            f"- 실행 시각(KST): {{{{ execution_date.in_timezone('Asia/Seoul').to_datetime_string() }}}}"
         ),
     )
 
