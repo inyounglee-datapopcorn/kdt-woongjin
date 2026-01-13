@@ -103,7 +103,7 @@ with DAG(
         text=":white_check_mark: *지하철 데이터 적재 완료*\n"
              "- 대상 테이블: `realtime_subway_positions_2`\n"
              "- 적재된 레코드 수: {{ task_instance.xcom_pull(task_ids='collect_and_insert_subway_data') }}개\n"
-             "- 실행 시각: {{ dag_run.logical_date.in_timezone('Asia/Seoul').strftime('%Y-%m-%d %H:%M:%S') }}",
+             "- 실행 시각: {{ macros.pendulum.instance(dag_run.logical_date).in_tz('Asia/Seoul').strftime('%Y-%m-%d %H:%M:%S') }}",
         username='승우봇'
     )
 
