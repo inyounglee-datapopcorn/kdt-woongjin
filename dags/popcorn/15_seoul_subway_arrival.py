@@ -2,7 +2,7 @@ import logging
 import requests
 import pendulum
 from airflow import DAG
-from airflow.decorators import task
+from airflow.sdk import task
 from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 from airflow.providers.postgres.hooks.postgres import PostgresHook 
 
@@ -34,7 +34,7 @@ with DAG(
     # 1. 테이블 생성
     create_table = SQLExecuteQueryOperator(
         task_id='create_table',
-        conn_id='supabase_conn',
+        conn_id='teampopcorn_supabase_conn',
         sql="""
             CREATE TABLE IF NOT EXISTS realtime_subway_arrivals (
                 id SERIAL PRIMARY KEY,
@@ -52,7 +52,7 @@ with DAG(
     # 2. 데이터 수집 -> 적재
     @task(task_id='fetch_and_insert_arrivals')
     def fetch_and_insert_arrivals():
-        hook = PostgresHook(postgres_conn_id='supabase_conn')
+        hook = PostgresHook(postgres_conn_id='teampopcorn_supabase_conn')
         conn = hook.get_sqlalchemy_engine()
         all_records = []
 

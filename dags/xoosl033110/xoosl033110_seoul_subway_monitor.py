@@ -2,29 +2,31 @@ import logging
 import requests
 import pendulum
 from airflow import DAG
-from airflow.sdk import task
+from airflow.decorators import task
 from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 from airflow.providers.postgres.hooks.postgres import PostgresHook 
+from airflow.providers.slack.operators.slack import SlackAPIPostOperator 
+from airflow.operators.python import ShortCircuitOperator 
 
 # Configuration
-SEOUL_API_KEY = "5a4c61745532696e393557726c696f"  # 실제 운영 시 Variable이나 Connection으로 관리 권장
+SEOUL_API_KEY = "75704f786c786f6f38346170715555"  # 실제 운영 시 Variable이나 Connection으로 관리 권장
 TARGET_LINES = [
     "1호선", "2호선", "3호선", "4호선", "5호선", 
     "6호선", "7호선", "8호선", "9호선",
-    "경의중앙선", "공항철도", "수인분당선", "신분당선"
+    "경의중앙선", "공항철도", "분당선", "신분당선"
 ]
 
 default_args = dict(
-    owner = 'datapopcorn',
-    email = ['datapopcorn@gmail.com'],
+    owner = 'xoosl033110',
+    email = ['xoosl033110@gmail.com'],
     email_on_failure = False,
     retries = 1
 )
 
 with DAG(
-    dag_id="popcorn_14_seoul_subway_monitor",
+    dag_id="xoosl033110_seoul_subway_monitor",
     start_date=pendulum.today('Asia/Seoul').add(days=-1),
-    schedule="@daily",  # 매일 한 번 실행
+    schedule="*/5 * * * *",  # 5분마다 실행
     catchup=False,
     default_args=default_args,
     tags=['subway', 'project'],
@@ -33,7 +35,7 @@ with DAG(
     # 1. 테이블 생성 (없을 경우)
     create_table = SQLExecuteQueryOperator(
         task_id='create_table',
-        conn_id='popcorn_supabase_conn',
+        conn_id='xoosl033110_supabase_conn',
         sql="""
             CREATE TABLE IF NOT EXISTS realtime_subway_positions (
                 id SERIAL PRIMARY KEY,
@@ -43,7 +45,7 @@ with DAG(
                 station_name VARCHAR(50),
                 train_number VARCHAR(50),
                 last_rec_date VARCHAR(50),
-                last_rec_time TIMESTAMPTZ,
+                last_rec_time VARCHAR(50),
                 direction_type INT,
                 dest_station_id VARCHAR(50),
                 dest_station_name VARCHAR(50),
@@ -55,10 +57,10 @@ with DAG(
         """
     )
 
-    # 2. 데이터 수집 및 적재 태스크
+    # 3. 2번 태스크 실행 결과(처리 건수 등)를 반환하도록 수정
     @task(task_id='collect_and_insert_subway_data')
     def collect_and_insert_subway_data():
-        hook = PostgresHook(postgres_conn_id='popcorn_supabase_conn')
+        hook = PostgresHook(postgres_conn_id='xoosl033110_supabase_conn')
         conn = hook.get_sqlalchemy_engine()
         
         all_records = []
@@ -85,7 +87,7 @@ with DAG(
                             "station_name": item.get("statnNm"),
                             "train_number": item.get("trainNo"),
                             "last_rec_date": item.get("lastRecptnDt"),
-                            "last_rec_time": pendulum.parse(item.get("recptnDt"), tz='Asia/Seoul') if item.get("recptnDt") else None,
+                            "last_rec_time": item.get("recptnDt"),
                             "direction_type": int(item.get("updnLine")) if item.get("updnLine") and str(item.get("updnLine")).isdigit() else None,
                             "dest_station_id": item.get("statnTid"),
                             "dest_station_name": item.get("statnTnm"),
@@ -114,9 +116,35 @@ with DAG(
                 method='multi' # 성능 향상을 위해 multi insert
             )
             logging.info("Insert completed.")
+            return len(all_records)
         else:
             logging.info("No records to insert.")
+            return 0
 
     ingestion_task = collect_and_insert_subway_data()
 
-    create_table >> ingestion_task
+    # 4. 오전 10시 실행인지 확인
+    def check_10am_run(**context):
+        # 실행 기준 시간(logical_date) 가져오기 (UTC)
+        logical_date = context['logical_date']
+        # 한국 시간으로 변환
+        seoul_time = logical_date.in_timezone('Asia/Seoul')
+        logging.info(f"Current Logical Date (Seoul): {seoul_time}")
+        
+        # 10시 00분인지 확인
+        return seoul_time.hour == 10 and seoul_time.minute == 0
+
+    check_first_run = ShortCircuitOperator(
+        task_id='check_10am_run',
+        python_callable=check_10am_run
+    )
+
+    # 5. 슬랙 알림 전송
+    send_slack = SlackAPIPostOperator(
+        task_id='send_slack_message_api',
+        slack_conn_id='xoosl033110_slack_conn',
+        channel='#bot-playground',
+        text=':white_check_mark: Seoul Subway Data Ingestion Completed! Records inserted: {{ ti.xcom_pull(task_ids="collect_and_insert_subway_data") }}'
+    )
+
+    create_table >> ingestion_task >> check_first_run >> send_slack
