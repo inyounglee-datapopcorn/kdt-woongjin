@@ -14,7 +14,7 @@ with DAG(
     # 예: 채널에서 '/invite @App_Name' 입력
     send_slack = SlackAPIPostOperator(
         task_id='send_slack_message_api',
-        slack_conn_id='ojcr4261836_design_slack_conn',
+        slack_conn_id='ojcr4261836-design_slack_bot',
         channel='#bot-playground',  # 보낼 채널명을 입력하세요 (예: #general)
         text=':rocket: Airflow -> Slack API (Token) 연결 성공! 12_2 테스트 DAG입니다.',
     )
