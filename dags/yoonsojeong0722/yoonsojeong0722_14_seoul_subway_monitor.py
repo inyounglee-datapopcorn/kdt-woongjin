@@ -5,6 +5,7 @@ from airflow import DAG
 from airflow.decorators import task
 from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 from airflow.providers.postgres.hooks.postgres import PostgresHook 
+from airflow.providers.slack.operators.slack import SlackAPIPostOperator
 
 # Configuration
 SEOUL_API_KEY = "634f415258736a653638734147456d"  # 실제 운영 시 Variable이나 Connection으로 관리 권장
