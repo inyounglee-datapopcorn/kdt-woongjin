@@ -3,11 +3,11 @@ from airflow.providers.slack.operators.slack import SlackAPIPostOperator
 import pendulum
 
 with DAG(
-    dag_id='popcorn_12_2_slack_api_test_dag',
+    dag_id='purple45663_12_2_slack_api_test_dag',
     start_date=pendulum.today('UTC').add(days=-1),
     schedule='0 0 * * *',
     catchup=False,
-    tags=['popcorn', 'slack', 'api'],
+    tags=['purple45663', 'slack', 'api'],
 ) as dag:
 
     send_slack = SlackAPIPostOperator(
