@@ -5,14 +5,22 @@ from airflow import DAG
 from airflow.sdk import task
 from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 from airflow.providers.postgres.hooks.postgres import PostgresHook 
+from airflow.providers.slack.operators.slack import SlackAPIPostOperator
 
 # Configuration
-SEOUL_API_KEY = "45415767686a656838334a6777656b"  # 실제 운영 시 Variable이나 Connection으로 관리 권장
+SEOUL_API_KEY = "45415767686a656838334a6777656b"
 TARGET_LINES = [
     "1호선", "2호선", "3호선", "4호선", "5호선", 
     "6호선", "7호선", "8호선", "9호선",
     "경의중앙선", "공항철도", "수인분당선", "신분당선"
 ]
+
+# Connection & Table Config
+SUPABASE_CONN_ID = 'cometj456_supabase_conn'
+SLACK_CONN_ID = 'cometj456_slack_conn'
+SLACK_CHANNEL = '#bot-playground'
+SLACK_USERNAME = 'Comet_Bot'
+TABLE_NAME = 'realtime_subway_positions_v2'
 
 default_args = dict(
     owner = 'cometj456',
@@ -33,9 +41,9 @@ with DAG(
     # 1. 테이블 생성 (없을 경우)
     create_table = SQLExecuteQueryOperator(
         task_id='create_table',
-        conn_id='cometj456_supabase_conn',
-        sql="""
-            CREATE TABLE IF NOT EXISTS realtime_subway_positions_v2 (
+        conn_id=SUPABASE_CONN_ID,
+        sql=f"""
+            CREATE TABLE IF NOT EXISTS {TABLE_NAME} (
                 id SERIAL PRIMARY KEY,
                 line_id VARCHAR(50),
                 line_name VARCHAR(50),
@@ -58,7 +66,7 @@ with DAG(
     # 2. 데이터 수집 및 적재 태스크
     @task(task_id='collect_and_insert_subway_data')
     def collect_and_insert_subway_data():
-        hook = PostgresHook(postgres_conn_id='cometj456_supabase_conn')
+        hook = PostgresHook(postgres_conn_id=SUPABASE_CONN_ID)
         conn = hook.get_sqlalchemy_engine()
         
         all_records = []
@@ -107,16 +115,30 @@ with DAG(
             import pandas as pd
             df = pd.DataFrame(all_records)
             df.to_sql(
-                'realtime_subway_positions_v2',
+                TABLE_NAME,
                 con=conn,
                 if_exists='append',
                 index=False,
-                method='multi' # 성능 향상을 위해 multi insert
+                method='multi'
             )
             logging.info("Insert completed.")
         else:
             logging.info("No records to insert.")
-
+        
+        return len(all_records)
+            
+    # 2. 슬랙 알림 태스크
+    send_slack_notification = SlackAPIPostOperator(
+        task_id='send_slack_notification',
+        slack_conn_id=SLACK_CONN_ID,
+        channel=SLACK_CHANNEL,
+        text=f":white_check_mark: *지하철 데이터 적재 완료*\n"
+             f"- 대상 테이블: `{TABLE_NAME}`\n"
+             "- 적재된 레코드 수: {{ task_instance.xcom_pull(task_ids='collect_and_insert_subway_data') }}개\n"
+             "- 실행 시각: {{ macros.pendulum.instance(dag_run.logical_date).in_tz('Asia/Seoul').strftime('%Y-%m-%d %H:%M:%S') }}",
+        username=SLACK_USERNAME
+    )
+       
     ingestion_task = collect_and_insert_subway_data()
 
-    create_table >> ingestion_task
+    create_table >> ingestion_task >> send_slack_notification
