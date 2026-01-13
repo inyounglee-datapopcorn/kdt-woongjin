@@ -11,7 +11,7 @@ SEOUL_API_KEY = "5a4c61745532696e393557726c696f"  # 실제 운영 시 Variable�
 TARGET_LINES = [
     "1호선", "2호선", "3호선", "4호선", "5호선", 
     "6호선", "7호선", "8호선", "9호선",
-    "경의중앙선", "공항철도", "분당선", "신분당선"
+    "경의중앙선", "공항철도", "수인분당선", "신분당선"
 ]
 
 default_args = dict(
@@ -33,7 +33,7 @@ with DAG(
     # 1. 테이블 생성 (없을 경우)
     create_table = SQLExecuteQueryOperator(
         task_id='create_table',
-        conn_id='supabase_conn',
+        conn_id='popcorn_supabase_conn',
         sql="""
             CREATE TABLE IF NOT EXISTS realtime_subway_positions (
                 id SERIAL PRIMARY KEY,
@@ -58,7 +58,7 @@ with DAG(
     # 2. 데이터 수집 및 적재 태스크
     @task(task_id='collect_and_insert_subway_data')
     def collect_and_insert_subway_data():
-        hook = PostgresHook(postgres_conn_id='supabase_conn')
+        hook = PostgresHook(postgres_conn_id='popcorn_supabase_conn')
         conn = hook.get_sqlalchemy_engine()
         
         all_records = []
