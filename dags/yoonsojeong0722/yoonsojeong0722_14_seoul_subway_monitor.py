@@ -33,7 +33,7 @@ with DAG(
 
     # 1. 테이블 생성 (없을 경우)
     create_table = SQLExecuteQueryOperator(
-        task_id='create_table',
+        task_id='sj_create_table',
         conn_id='supabase_conn',  
         sql="""
             CREATE TABLE IF NOT EXISTS realtime_subway_positions_v2 (  
@@ -57,7 +57,7 @@ with DAG(
     )
 
     # 2. 데이터 수집 및 적재 태스크
-    @task(task_id='collect_and_insert_subway_data')
+    @task(task_id='sj_collect_and_insert_subway_data')
     def collect_and_insert_subway_data():
         hook = PostgresHook(postgres_conn_id='sojeong_supabase_conn')
         conn = hook.get_sqlalchemy_engine()
@@ -124,7 +124,7 @@ with DAG(
 
     # 슬랙 알림 전송
     send_slack = SlackAPIPostOperator(
-        task_id='send_slack_message_api',
+        task_id='sj_send_slack_message_api',
         slack_conn_id='sojeong_supabase_conn',
         channel='#bot-playground',
         text='::서울 지하철 실시간 위치 추출 DAG가 성공적으로 실행되었습니다'
