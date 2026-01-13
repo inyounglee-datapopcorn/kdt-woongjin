@@ -37,31 +37,21 @@ with DAG(
         sql="""
             CREATE TABLE IF NOT EXISTS realtime_subway_positions_v2 (
                 id SERIAL PRIMARY KEY,
-                line_id VARCHAR(100),
-                line_name VARCHAR(100),
-                station_id VARCHAR(100),
-                station_name VARCHAR(100),
-                train_number VARCHAR(100),
-                last_rec_date VARCHAR(100),
+                line_id VARCHAR(50),
+                line_name VARCHAR(50),
+                station_id VARCHAR(50),
+                station_name VARCHAR(50),
+                train_number VARCHAR(50),
+                last_rec_date VARCHAR(50),
                 last_rec_time TIMESTAMPTZ,
                 direction_type INT,
-                dest_station_id VARCHAR(100),
-                dest_station_name VARCHAR(100),
+                dest_station_id VARCHAR(50),
+                dest_station_name VARCHAR(50),
                 train_status INT,
                 is_express INT DEFAULT 0,
                 is_last_train BOOLEAN DEFAULT FALSE,
-                created_at timestamp with time zone not null default (now() AT TIME ZONE 'Asia/Seoul'::text)
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
-
-            -- Ensure columns are wide enough if table already exists
-            ALTER TABLE realtime_subway_positions ALTER COLUMN line_id TYPE VARCHAR(100);
-            ALTER TABLE realtime_subway_positions ALTER COLUMN line_name TYPE VARCHAR(100);
-            ALTER TABLE realtime_subway_positions ALTER COLUMN station_id TYPE VARCHAR(100);
-            ALTER TABLE realtime_subway_positions ALTER COLUMN station_name TYPE VARCHAR(100);
-            ALTER TABLE realtime_subway_positions ALTER COLUMN train_number TYPE VARCHAR(100);
-            ALTER TABLE realtime_subway_positions ALTER COLUMN last_rec_date TYPE VARCHAR(100);
-            ALTER TABLE realtime_subway_positions ALTER COLUMN dest_station_id TYPE VARCHAR(100);
-            ALTER TABLE realtime_subway_positions ALTER COLUMN dest_station_name TYPE VARCHAR(100);
         """
     )
 
