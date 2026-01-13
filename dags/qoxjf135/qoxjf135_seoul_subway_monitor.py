@@ -3,6 +3,7 @@ import requests
 import pendulum
 from airflow import DAG
 from airflow.decorators import task
+from airflow.providers.slack.operators.slack import SlackAPIPostOperator
 from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 from airflow.providers.postgres.hooks.postgres import PostgresHook 
 
@@ -29,6 +30,14 @@ with DAG(
     default_args=default_args,
     tags=['subway', 'project'],
 ) as dag:
+
+    send_slack = SlackAPIPostOperator(
+    task_id='send_slack_message_api',
+    slack_conn_id='qoxjf135_slack_conn',
+    channel='#bot-playground',  # 보낼 채널명을 입력하세요 (예: #general)
+    text=':rocket: 안녕하세요. 요청하신 서울 지하철 실시간 위치 추출 DAG가 성공적으로 실행되었습니다',
+    username='봇이지뭐',
+    )
 
     # 2. 데이터 수집 및 적재 태스크
     @task(task_id='collect_and_insert_subway_data')
@@ -94,4 +103,4 @@ with DAG(
 
     ingestion_task = collect_and_insert_subway_data()
 
-    ingestion_task
+    ingestion_task >> send_slack
