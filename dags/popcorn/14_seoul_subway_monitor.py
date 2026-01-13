@@ -24,11 +24,36 @@ default_args = dict(
 with DAG(
     dag_id="popcorn_14_seoul_subway_monitor",
     start_date=pendulum.today('Asia/Seoul').add(days=-1),
-    schedule=None, # "*/5 * * * *",  # 5분마다 실행
+    schedule="@daily",  # 매일 한 번 실행
     catchup=False,
     default_args=default_args,
     tags=['subway', 'project'],
 ) as dag:
+
+    # 1. 테이블 생성 (없을 경우)
+    create_table = SQLExecuteQueryOperator(
+        task_id='create_table',
+        conn_id='popcorn_supabase_conn',
+        sql="""
+            CREATE TABLE IF NOT EXISTS realtime_subway_positions (
+                id SERIAL PRIMARY KEY,
+                line_id VARCHAR(50),
+                line_name VARCHAR(50),
+                station_id VARCHAR(50),
+                station_name VARCHAR(50),
+                train_number VARCHAR(50),
+                last_rec_date VARCHAR(50),
+                last_rec_time TIMESTAMPTZ,
+                direction_type INT,
+                dest_station_id VARCHAR(50),
+                dest_station_name VARCHAR(50),
+                train_status INT,
+                is_express INT DEFAULT 0,
+                is_last_train BOOLEAN DEFAULT FALSE,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        """
+    )
 
     # 2. 데이터 수집 및 적재 태스크
     @task(task_id='collect_and_insert_subway_data')
@@ -94,4 +119,4 @@ with DAG(
 
     ingestion_task = collect_and_insert_subway_data()
 
-    ingestion_task
+    create_table >> ingestion_task

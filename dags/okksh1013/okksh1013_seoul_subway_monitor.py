@@ -7,24 +7,24 @@ from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 from airflow.providers.postgres.hooks.postgres import PostgresHook 
 
 # Configuration
-SEOUL_API_KEY = "5064496c74746a673130306b6265574d"  # 실제 운영 시 Variable이나 Connection으로 관리 권장
+SEOUL_API_KEY = "434459696c6f6b6b3130347378545273"  # 실제 운영 시 Variable이나 Connection으로 관리 권장
 TARGET_LINES = [
     "1호선", "2호선", "3호선", "4호선", "5호선", 
     "6호선", "7호선", "8호선", "9호선",
-    "경의중앙선", "공항철도", "수인분당선", "신분당선"
+    "경의중앙선", "공항철도", "분당선", "신분당선"
 ]
 
 default_args = dict(
-    owner = 'airflow',
-    email = ['tjgk1203@gmail.com'],
+    owner = 'okksh1013',
+    email = ['okksh1013@gmail.com'],
     email_on_failure = False,
     retries = 1
 )
 
 with DAG(
-    dag_id="tjgk1203_14_seoul_subway_monitor",
+    dag_id="okksh1013_seoul_subway_monitor",
     start_date=pendulum.today('Asia/Seoul').add(days=-1),
-    schedule="*/1 * * * *",  # 1분마다 실행
+    schedule="*/5 * * * *",  # 5분마다 실행
     catchup=False,
     default_args=default_args,
     tags=['subway', 'project'],
@@ -33,7 +33,7 @@ with DAG(
     # 1. 테이블 생성 (없을 경우)
     create_table = SQLExecuteQueryOperator(
         task_id='create_table',
-        conn_id='tjgk1203_supabase_conn',
+        conn_id='supabase_conn',
         sql="""
             CREATE TABLE IF NOT EXISTS realtime_subway_positions (
                 id SERIAL PRIMARY KEY,
@@ -58,7 +58,7 @@ with DAG(
     # 2. 데이터 수집 및 적재 태스크
     @task(task_id='collect_and_insert_subway_data')
     def collect_and_insert_subway_data():
-        hook = PostgresHook(postgres_conn_id='tjgk1203_supabase_conn')
+        hook = PostgresHook(postgres_conn_id='okksh1013supabase_conn')
         conn = hook.get_sqlalchemy_engine()
         
         all_records = []

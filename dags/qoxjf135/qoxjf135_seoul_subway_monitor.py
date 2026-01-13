@@ -7,7 +7,7 @@ from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 from airflow.providers.postgres.hooks.postgres import PostgresHook 
 
 # Configuration
-SEOUL_API_KEY = "5064496c74746a673130306b6265574d"  # 실제 운영 시 Variable이나 Connection으로 관리 권장
+SEOUL_API_KEY = "716a654d46716f7835365268626a78"  # 실제 운영 시 Variable이나 Connection으로 관리 권장
 TARGET_LINES = [
     "1호선", "2호선", "3호선", "4호선", "5호선", 
     "6호선", "7호선", "8호선", "9호선",
@@ -15,50 +15,25 @@ TARGET_LINES = [
 ]
 
 default_args = dict(
-    owner = 'airflow',
-    email = ['tjgk1203@gmail.com'],
+    owner = 'qoxjf135',
+    email = ['qoxjf135@gmail.com'],
     email_on_failure = False,
     retries = 1
 )
 
 with DAG(
-    dag_id="tjgk1203_14_seoul_subway_monitor",
+    dag_id="qoxjf135_seoul_subway_monitor",
     start_date=pendulum.today('Asia/Seoul').add(days=-1),
-    schedule="*/1 * * * *",  # 1분마다 실행
+    schedule=None, # "*/5 * * * *",  # 5분마다 실행
     catchup=False,
     default_args=default_args,
     tags=['subway', 'project'],
 ) as dag:
 
-    # 1. 테이블 생성 (없을 경우)
-    create_table = SQLExecuteQueryOperator(
-        task_id='create_table',
-        conn_id='tjgk1203_supabase_conn',
-        sql="""
-            CREATE TABLE IF NOT EXISTS realtime_subway_positions (
-                id SERIAL PRIMARY KEY,
-                line_id VARCHAR(50),
-                line_name VARCHAR(50),
-                station_id VARCHAR(50),
-                station_name VARCHAR(50),
-                train_number VARCHAR(50),
-                last_rec_date VARCHAR(50),
-                last_rec_time VARCHAR(50),
-                direction_type INT,
-                dest_station_id VARCHAR(50),
-                dest_station_name VARCHAR(50),
-                train_status INT,
-                is_express INT DEFAULT 0,
-                is_last_train BOOLEAN DEFAULT FALSE,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            );
-        """
-    )
-
     # 2. 데이터 수집 및 적재 태스크
     @task(task_id='collect_and_insert_subway_data')
     def collect_and_insert_subway_data():
-        hook = PostgresHook(postgres_conn_id='tjgk1203_supabase_conn')
+        hook = PostgresHook(postgres_conn_id='qoxjf135_supabase_conn')
         conn = hook.get_sqlalchemy_engine()
         
         all_records = []
@@ -85,7 +60,7 @@ with DAG(
                             "station_name": item.get("statnNm"),
                             "train_number": item.get("trainNo"),
                             "last_rec_date": item.get("lastRecptnDt"),
-                            "last_rec_time": item.get("recptnDt"),
+                            "last_rec_time": pendulum.parse(item.get("recptnDt"), tz='Asia/Seoul') if item.get("recptnDt") else None,
                             "direction_type": int(item.get("updnLine")) if item.get("updnLine") and str(item.get("updnLine")).isdigit() else None,
                             "dest_station_id": item.get("statnTid"),
                             "dest_station_name": item.get("statnTnm"),
@@ -119,4 +94,4 @@ with DAG(
 
     ingestion_task = collect_and_insert_subway_data()
 
-    create_table >> ingestion_task
+    ingestion_task
