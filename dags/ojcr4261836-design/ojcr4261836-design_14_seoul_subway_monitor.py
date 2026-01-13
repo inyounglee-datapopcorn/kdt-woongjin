@@ -7,7 +7,7 @@ from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 from airflow.providers.postgres.hooks.postgres import PostgresHook 
 
 # Configuration
-SEOUL_API_KEY = "6a77636b51616e7337307370656c4a"  # 실제 운영 시 Variable이나 Connection으로 관리 권장
+SEOUL_API_KEY = "54684a47546f683435384d714c6e71"  # 실제 운영 시 Variable이나 Connection으로 관리 권장
 TARGET_LINES = [
     "1호선", "2호선", "3호선", "4호선", "5호선", 
     "6호선", "7호선", "8호선", "9호선",
@@ -15,14 +15,14 @@ TARGET_LINES = [
 ]
 
 default_args = dict(
-    owner = 'ansemr99',
-    email = ['ansemr99@gmail.com'],
+    owner = 'ojcr4261836-design',
+    email = ['ojcr4261836@gmail.com'],
     email_on_failure = False,
     retries = 1
 )
 
 with DAG(
-    dag_id="ansemr99_seoul_subway_monitor",
+    dag_id="ojcr4261836-design_14_seoul_subway_monitor",
     start_date=pendulum.today('Asia/Seoul').add(days=-1),
     schedule=None, # "*/5 * * * *",  # 5분마다 실행
     catchup=False,
@@ -33,7 +33,7 @@ with DAG(
     # 2. 데이터 수집 및 적재 태스크
     @task(task_id='collect_and_insert_subway_data')
     def collect_and_insert_subway_data():
-        hook = PostgresHook(postgres_conn_id='ansemr99_supabase_conn')
+        hook = PostgresHook(postgres_conn_id='ojcr4261836-design_supabase_conn')
         conn = hook.get_sqlalchemy_engine()
         
         all_records = []
@@ -82,7 +82,7 @@ with DAG(
             import pandas as pd
             df = pd.DataFrame(all_records)
             df.to_sql(
-                'realtime_subway',
+                'realtime_subway_positions',
                 con=conn,
                 if_exists='append',
                 index=False,
