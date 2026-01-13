@@ -5,6 +5,7 @@ from airflow import DAG
 from airflow.decorators import task
 from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 from airflow.providers.postgres.hooks.postgres import PostgresHook 
+from airflow.providers.slack.operators.slack import SlackAPIPostOperator 
 
 # Configuration
 SEOUL_API_KEY = "75704f786c786f6f38346170715555"  # 실제 운영 시 Variable이나 Connection으로 관리 권장
@@ -55,7 +56,7 @@ with DAG(
         """
     )
 
-    # 2. 데이터 수집 및 적재 태스크
+    # 3. 2번 태스크 실행 결과(처리 건수 등)를 반환하도록 수정
     @task(task_id='collect_and_insert_subway_data')
     def collect_and_insert_subway_data():
         hook = PostgresHook(postgres_conn_id='xoosl033110_supabase_conn')
@@ -114,9 +115,19 @@ with DAG(
                 method='multi' # 성능 향상을 위해 multi insert
             )
             logging.info("Insert completed.")
+            return len(all_records)
         else:
             logging.info("No records to insert.")
+            return 0
 
     ingestion_task = collect_and_insert_subway_data()
 
-    create_table >> ingestion_task
+    # 4. 슬랙 알림 전송
+    send_slack = SlackAPIPostOperator(
+        task_id='send_slack_message_api',
+        slack_conn_id='xoosl033110_slack_conn',
+        channel='#bot-playground',
+        text=':white_check_mark: Seoul Subway Data Ingestion Completed! Records inserted: {{ ti.xcom_pull(task_ids="collect_and_insert_subway_data") }}'
+    )
+
+    create_table >> ingestion_task >> send_slack
