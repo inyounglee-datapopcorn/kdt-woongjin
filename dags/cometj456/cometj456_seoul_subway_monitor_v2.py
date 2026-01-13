@@ -28,7 +28,7 @@ SLACK_CONN_ID = "cometj456_slack_conn"  # Slack Airflow Connection ID
 SLACK_CHANNEL = "#bot-playground"  # Slack 채널
 SLACK_USERNAME = "Comet_Bot"  # Slack 메시지 발신자명(표시용)
 
-TABLE_NAME = "realtime_subway_positions_v3"  # 적재 대상 테이블명(v2로 통일)
+TABLE_NAME = "realtime_subway_positions_v2"  # 적재 대상 테이블명(v2로 통일)
 
 # (주의) schedule="*/30 * * * *"는 30분마다 실행입니다.
 SCHEDULE_CRON = "*/30 * * * *"  # 30분마다 실행
@@ -172,13 +172,13 @@ with DAG(
     # =========================
     # 3) 슬랙 알림 태스크
     # =========================
-    send_slack_notification = SlackAPIPostOperator(
-        task_id="send_slack_notification",  # 태스크 ID
+    send_slack_notification_cometj456 = SlackAPIPostOperator(
+        task_id="send_slack_notification_cometj456",  # 태스크 ID
         slack_conn_id=SLACK_CONN_ID,  # Slack 연결 ID
         channel=SLACK_CHANNEL,  # 채널
         username=SLACK_USERNAME,  # 발신자 표시명
         text=(  # Slack 메시지 본문(Jinja 템플릿 포함 가능)
-            f":rocket: *지하철 데이터 적재 완료*\n"  # 제목
+            f":pet: *지하철 데이터 적재 완료*\n"  # 제목
             f"- 대상 테이블: `{TABLE_NAME}`\n"  # 테이블명
             "- 적재된 레코드 수: {{ task_instance.xcom_pull(task_ids='collect_and_insert_subway_data_v2')['inserted'] }}개\n"  # XCom inserted
             "- 실행 시각(KST): {{ task_instance.xcom_pull(task_ids='collect_and_insert_subway_data_v2')['run_time_kst'] }}"  # XCom run_time_kst
@@ -188,4 +188,4 @@ with DAG(
     # =========================
     # 태스크 의존성 설정
     # =========================
-    create_table >> ingestion_task >> send_slack_notification  # 생성 -> 적재 -> 슬랙 순서
+    create_table >> ingestion_task >> send_slack_notification_cometj456  # 생성 -> 적재 -> 슬랙 순서
