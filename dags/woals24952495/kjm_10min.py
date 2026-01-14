@@ -1,5 +1,6 @@
 from airflow import DAG
 from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
+import pendulum
 from datetime import datetime, timedelta
 
 # ==========================================
@@ -21,8 +22,8 @@ dag = DAG(
     'woals24952495_seoul_subway_delay_calculator', # <--- DAG ID 변경 (유니크해야 함)
     default_args=default_args,
     description='10분마다 Supabase 테이블 갱신 및 지연시간 계산',
-    schedule='*/10 * * * *',  # [중요] 10분마다 실행 (Cron 표현식)
-    start_date=datetime(2023, 1, 1),   # 시작일 (과거로 설정해두면 켜자마자 실행됨)
+    schedule='*/10 6-10 * * *',  # [변경] 매일 06시-10시, 10분 간격 (KST 기준)
+    start_date=pendulum.datetime(2023, 1, 1, tz='Asia/Seoul'),   # [변경] KST 설정
     catchup=False,                     # 과거 밀린 작업은 실행 안 함
     tags=['subway', 'supabase', 'woals24952495'], # <--- Tag 추가
 )
@@ -93,7 +94,6 @@ sql_calc_delay = """
 # ==========================================
 
 # [중요] postgres_conn_id에는 Airflow UI에서 설정한 Connection ID를 입력해야 합니다.
-# 여기서는 'supabase_conn'이라고 가정했습니다.
 t1_refresh_1hour = SQLExecuteQueryOperator(
     task_id='refresh_table_1hour',
     conn_id='jaemin1077_supabase_conn', 
