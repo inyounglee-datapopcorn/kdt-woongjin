@@ -35,6 +35,7 @@ dag = DAG(
 sql_refresh_1hour = """
     DROP TABLE IF EXISTS "table_1hour";
 
+
     CREATE TABLE "table_1hour" AS
     SELECT *
     FROM "final_realtime_subway"
