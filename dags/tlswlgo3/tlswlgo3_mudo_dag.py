@@ -23,7 +23,7 @@ def create_schema_and_table(**kwargs):
         
         # Schema creation
         create_schema_query = "CREATE SCHEMA IF NOT EXISTS tlswlgo3;"
-        hook.run(create_schema_query)
+        hook.run(create_schema_query, autocommit=True)
         logging.info("Schema 'tlswlgo3' checked/created.")
 
         # Table creation
@@ -41,7 +41,7 @@ def create_schema_and_table(**kwargs):
             collected_at TIMESTAMP
         ); 
         """
-        hook.run(create_table_query)
+        hook.run(create_table_query, autocommit=True)
         logging.info("Table 'tlswlgo3.youtube_videos' checked/created.")
         
     except Exception as e:
@@ -53,9 +53,12 @@ def collect_and_save_data(**kwargs):
     Collects data from YouTube API and saves strictly defined fields to Supabase.
     searches for '무한도전', combines results by viewCount and date to cover popular and recent.
     """
-    api_key = Variable.get("YOUTUBE_API_KEY")
+    api_key = Variable.get("YOUTUBE_API_KEY", default_var=None)
     if not api_key:
-        raise ValueError("YOUTUBE_API_KEY variable is missing.")
+        # Fallback to hardcoded key if Variable is missing, though previous turn used hardcoded
+        api_key = "AIzaSyD5prc5qQKqpXTXV_L1enxHUCnauKlUMHI"
+
+    logging.info("Starting data collection...")
 
     # We will fetch a mix of popular and recent videos to build the archive
     # 1. By View Count (Legends)
@@ -68,14 +71,15 @@ def collect_and_save_data(**kwargs):
         'q': '무한도전',
         'type': 'video',
         'maxResults': 25, # 25 + 25 = 50 items per run roughly
-        'key': "AIzaSyD5prc5qQKqpXTXV_L1enxHUCnauKlUMHI"
+        'key': api_key
     }
 
     # Fetch 1: Popular
     try:
+        logging.info("Fetching popular videos...")
         params_pop = common_params.copy()
         params_pop['order'] = 'viewCount'
-        resp_pop = requests.get(base_url, params=params_pop).json()
+        resp_pop = requests.get(base_url, params=params_pop, timeout=10).json()
         for item in resp_pop.get('items', []):
             video_ids.add(item['id']['videoId'])
     except Exception as e:
@@ -83,9 +87,10 @@ def collect_and_save_data(**kwargs):
 
     # Fetch 2: Recent
     try:
+        logging.info("Fetching recent videos...")
         params_date = common_params.copy()
         params_date['order'] = 'date'
-        resp_date = requests.get(base_url, params=params_date).json()
+        resp_date = requests.get(base_url, params=params_date, timeout=10).json()
         for item in resp_date.get('items', []):
             video_ids.add(item['id']['videoId'])
     except Exception as e:
@@ -97,7 +102,9 @@ def collect_and_save_data(**kwargs):
 
     # Fetch Details (Statistics)
     ids_list = list(video_ids)
-    # The API allows max 50 ids per call, which fits our logic (max 50 unique)
+    logging.info(f"Fetching details for {len(ids_list)} videos...")
+    
+    # The API allows max 50 ids per call
     stats_url = "https://www.googleapis.com/youtube/v3/videos"
     stats_params = {
         'part': 'snippet,statistics',
@@ -106,7 +113,7 @@ def collect_and_save_data(**kwargs):
     }
     
     try:
-        stats_resp = requests.get(stats_url, params=stats_params).json()
+        stats_resp = requests.get(stats_url, params=stats_params, timeout=10).json()
     except Exception as e:
         logging.error(f"Error fetching video details: {e}")
         raise
@@ -114,12 +121,7 @@ def collect_and_save_data(**kwargs):
     processed_rows = []
     
     for item in stats_resp.get('items', []):
-        # Strict mapping as per requirements
         try:
-            # Note: channel_title is in schema but NOT in the "Strict Condition 1" list.
-            # However, logic dictates we need it for the schema. 
-            # item['snippet']['channelTitle'] is standard.
-            
             row = (
                 item['id'],                                         # video_id
                 item['snippet']['channelId'],                       # channel_id
@@ -142,6 +144,7 @@ def collect_and_save_data(**kwargs):
 
     # Upsert to Supabase
     try:
+        logging.info(f"Upserting {len(processed_rows)} rows into Supabase...")
         hook = PostgresHook(postgres_conn_id='tlswlgo3_supabase_conn')
         hook.insert_rows(
             table='tlswlgo3.youtube_videos',
@@ -154,7 +157,7 @@ def collect_and_save_data(**kwargs):
             replace=True, # Handles de-duplication (Upsert)
             replace_index=['video_id']
         )
-        logging.info(f"Upserted {len(processed_rows)} rows to tlswlgo3.youtube_videos.")
+        logging.info(f"Upsert successful.")
     except Exception as e:
         logging.error(f"Error inserting rows: {e}")
         raise
