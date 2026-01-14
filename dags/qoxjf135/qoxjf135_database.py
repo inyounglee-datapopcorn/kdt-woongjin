@@ -1,5 +1,5 @@
 from airflow.providers.postgres.hooks.postgres import PostgresHook  # Airflow에서 DB 연결을 도와주는 도구
-
+##
 class SupabaseManager:
     """Supabase(데이터베이스)에 직접 명령(SQL)을 내려서 데이터를 저장하는 담당자"""
     

@@ -4,7 +4,7 @@ from airflow.models import Variable  # Airflow 변수를 관리하는 도구
 from datetime import datetime, timedelta
 import sys
 import os
-
+##
 # 모듈(crawler, database)을 불러오기 위해 현재 폴더의 위치를 파이썬에게 알려줍니다.
 dag_path = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(dag_path)
@@ -24,17 +24,17 @@ default_args = {
 }
 
 # [B] 실제 실행될 파이썬 함수 정의
-def youtube_crawling_task(keyword, total_days, **kwargs):
+def youtube_crawling_task(keyword, **kwargs):
     """유튜브 크롤링을 하고 결과를 DB에 넣는 일련의 과정"""
-    print(f"[*] 작업을 시작합니다: 키워드='{keyword}', 기간={total_days}일")
+    print(f"[*] 작업을 시작합니다: 키워드='{keyword}'")
     
     try:
         # 도구들을 준비합니다.
         crawler = YouTubeTrendCrawler()
         db = SupabaseManager(conn_id='qoxjf135_supabase_conn')
         
-        # 1. 유튜브에서 데이터를 가져옵니다.
-        summary_df = crawler.get_historical_data(keyword, total_days=total_days)
+        # 1. 유튜브에서 데이터를 가져옵니다. (날짜는 crawler 내부에서 고정됨: 2025-07-17 ~ 어제)
+        summary_df = crawler.get_historical_data(keyword)
         
         # 2. 가져온 데이터가 있으면 DB에 하나씩 저장합니다.
         if summary_df is not None:
@@ -73,7 +73,6 @@ with DAG(
         python_callable=youtube_crawling_task,  # 실행할 함수 이름
         op_kwargs={
             'keyword': '두바이 쫀득 쿠키',  # 함수에 전달할 검색어
-            'total_days': 1   # 테스트를 위해 1일치만 수집합니다.
         },
     )
 
