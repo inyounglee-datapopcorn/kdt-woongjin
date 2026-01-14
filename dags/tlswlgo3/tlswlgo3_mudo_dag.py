@@ -163,7 +163,7 @@ with DAG(
     dag_id='tlswlgo3_mudo_archive_dag',
     default_args=default_args,
     description='Collect Infinite Challenge videos every 30 mins',
-    schedule_interval='*/30 * * * *',
+    schedule='*/30 * * * *',
     start_date=datetime(2024, 1, 1),
     catchup=False,
     tags=['infinite_challenge', 'woongjin'],
