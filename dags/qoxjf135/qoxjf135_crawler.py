@@ -34,7 +34,7 @@ class YouTubeTrendCrawler:
                     part="id,snippet",
                     publishedAfter=start_time,
                     publishedBefore=end_time,
-                    maxResults=1,  # 테스트를 위해 조회 개수를 1개로 제한합니다 (기존 50)
+                    maxResults=50,  # 테스트를 위해 조회 개수를 1개로 제한합니다 (기존 50)
                     type="video",
                     order="date",  # 최신순
                     regionCode="KR",  # 한국 지역
@@ -80,14 +80,16 @@ class YouTubeTrendCrawler:
 
         return video_list
 
-    def get_historical_data(self, keyword, start_date=None, end_date=None, total_days=180):
+    def get_historical_data(self, keyword, start_date=None, end_date=None):
         """전체 기간을 분석하고 일별로 합산된 통계 데이터를 만드는 함수"""
         
-        # 날짜 설정이 없으면 '어제'를 기준으로 거꾸로 계산합니다.
+        # 1. 종료일 설정: 날짜 설정이 없으면 '어제'를 기준으로 합니다.
         if end_date is None:
             end_date = datetime.now(timezone.utc) - timedelta(days=1)
+            
+        # 2. 시작일 설정: 날짜 설정이 없으면 '2025-07-17' 고정 날짜를 사용합니다.
         if start_date is None:
-            start_date = end_date - timedelta(days=total_days)
+            start_date = datetime(2025, 7, 17, tzinfo=timezone.utc)
         
         print(f"[*] 분석 시작 범위: {start_date.strftime('%Y-%m-%d')} ~ {end_date.strftime('%Y-%m-%d')}")
         
@@ -95,7 +97,7 @@ class YouTubeTrendCrawler:
         current_end = end_date
         
         # 유튜브 검색 제한을 피하기 위해 30일 단위로 끊어서 수집합니다.
-        while current_end > start_date:
+        while current_end >= start_date:
             current_start = max(start_date, current_end - timedelta(days=30))
             print(f"[*] 기간 수집 중: {current_start.strftime('%Y-%m-%d')} ~ {current_end.strftime('%Y-%m-%d')}...")
             
