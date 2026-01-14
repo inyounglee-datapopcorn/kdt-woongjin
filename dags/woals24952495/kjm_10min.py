@@ -1,5 +1,5 @@
 from airflow import DAG
-from airflow.providers.postgres.operators.postgres import PostgresOperator
+from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 from datetime import datetime, timedelta
 
 # ==========================================
@@ -94,16 +94,16 @@ sql_calc_delay = """
 
 # [중요] postgres_conn_id에는 Airflow UI에서 설정한 Connection ID를 입력해야 합니다.
 # 여기서는 'supabase_conn'이라고 가정했습니다.
-t1_refresh_1hour = PostgresOperator(
+t1_refresh_1hour = SQLExecuteQueryOperator(
     task_id='refresh_table_1hour',
-    postgres_conn_id='jaemin1077_supabase_conn', 
+    conn_id='jaemin1077_supabase_conn', 
     sql=sql_refresh_1hour,
     dag=dag,
 )
 
-t2_calc_delay = PostgresOperator(
+t2_calc_delay = SQLExecuteQueryOperator(
     task_id='refresh_table_redash_test',
-    postgres_conn_id='jaemin1077_supabase_conn',
+    conn_id='jaemin1077_supabase_conn',
     sql=sql_calc_delay,
     dag=dag,
 )
