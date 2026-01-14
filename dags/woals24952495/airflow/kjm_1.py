@@ -7,20 +7,20 @@ from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 from airflow.providers.postgres.hooks.postgres import PostgresHook
 
 # Configuration
-SEOUL_API_KEY = "43434e536b776f6137326e4e664152" # <--- [변경 필요] 본인의 서울 열린데이터 광장 API 키 입력
+SEOUL_API_KEY = "6e71466270636b733633654f6b4a7a" # <--- 작동 확인된 키로 교체
 TARGET_LINES = [
     "1호선", "2호선", "3호선", "4호선", "5호선",
     "6호선", "7호선", "8호선", "9호선",
     "경의중앙선", "공항철도", "수인분당선", "경춘선"
 ]
 default_args = dict(
-    owner = 'woals24952495', # <--- [변경 완료]
-    email = ['woals24952495@naver.com'], # <--- [변경 완료] (임의 설정)
+    owner = 'woals24952495',
+    email = ['woals24952495@naver.com'],
     email_on_failure = False,
     retries = 1
 ) 
 with DAG(
-    dag_id="woals24952495_seoul_subway_ffff", # <--- [변경 완료]
+    dag_id="woals24952495_seoul_subway_final_test", # <--- 이름 변경 (새로운 DAG 생성)
     start_date=pendulum.today('Asia/Seoul').add(days=-1),
     schedule="* * * * *",  # 1분마다 실행 (Airflow 최소 주기)
     catchup=False,
