@@ -1,6 +1,6 @@
 from airflow import DAG  # Airflow의 핵심인 DAG(작업 흐름)를 만드는 도구
-from airflow.operators.python import PythonOperator  # 파이썬 코드를 실행하는 담당자
-from airflow.operators.email import EmailOperator  # 이메일을 보내는 담당자
+from airflow.providers.standard.operators.python import PythonOperator  # 파이썬 코드를 실행하는 담당자
+from airflow.providers.smtp.operators.smtp import EmailOperator  # 이메일을 보내는 담당자
 from airflow.models import Variable  # Airflow 변수를 관리하는 도구
 from datetime import datetime, timedelta
 import sys
@@ -85,7 +85,7 @@ with DAG(
         to=['qoxjf135@gmail.com', 'kate29397@gmail.com'], 
         subject='[알림] 유튜브 데이터 수집 완료 (오후 16시 정기 실행)',
         # 발송용 SMTP 서버는 'mail_connection' 설정을 사용합니다.
-        conn_id='qoxjf135_supabase_conn',
+        conn_id='qoxjf135_gmail_connection',
         html_content="""
         <h3>유튜브 트렌드 수집이 완료되었습니다.</h3>
         <p>데이터가 DB에 안전하게 저장되었습니다.</p>
