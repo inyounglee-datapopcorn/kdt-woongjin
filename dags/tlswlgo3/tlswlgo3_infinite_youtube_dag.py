@@ -2,7 +2,7 @@ import os
 import sys
 from datetime import datetime, timedelta
 from airflow import DAG
-from airflow.operators.python import PythonOperator
+from airflow.providers.standard.operators.python import PythonOperator
 
 # script 파일 경로 추가
 sys.path.append(os.path.dirname(__file__))
@@ -11,9 +11,13 @@ sys.path.append(os.path.dirname(__file__))
 from tlswlgo3_infinite_youtube_script import run_my_crawler
 
 def collect_youtube_data_task(**context):
-    from airflow.models import Variable
-    # Jinja 템플릿 에러를 방지하기 위해 실행 시점에 직접 변수를 가져옵니다.
-    api_key = Variable.get("tlswlgo3_youtube_apikey")
+    # Airflow 3 SDK 방식에 맞게 변수를 가져옵니다.
+    from airflow.sdk import Variable
+    try:
+        api_key = Variable.get("tlswlgo3_youtube_apikey")
+    except Exception as e:
+        print(f"Airflow Variable 'tlswlgo3_youtube_apikey'를 찾을 수 없습니다. 에러: {e}")
+        raise
     return run_my_crawler(api_key=api_key)
 
 def load_to_supabase(**context):
