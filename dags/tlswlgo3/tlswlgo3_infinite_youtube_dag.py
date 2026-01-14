@@ -1,20 +1,14 @@
+import os
+import sys
+from datetime import datetime, timedelta
 from airflow import DAG
 from airflow.operators.python import PythonOperator
-from datetime import datetime, timedelta
-import sys
-import os
 
-# youtube_script.py가 있는 경로를 추가 (필요시)
-# script_dir = os.path.dirname(os.path.abspath(__file__))
-# sys.path.append(script_dir)
+# script 파일 경로 추가
 sys.path.append(os.path.dirname(__file__))
 
-# Try to import, but catch error if it's run in an environment where youtube_script isn't available
-try:
-    from youtube_script import run_my_crawler
-except ImportError:
-    def run_my_crawler():
-        print("youtube_script not found")
+# Import run_my_crawler from tlswlgo3_infinite_youtube_script.py
+from tlswlgo3_infinite_youtube_script import run_my_crawler
 
 default_args = {
     'owner': 'inyoung',
@@ -33,5 +27,8 @@ with DAG(
 
     collect_task = PythonOperator(
         task_id='collect_youtube_data',
-        python_callable=run_my_crawler
+        python_callable=run_my_crawler,
+        op_kwargs={
+            'api_key': '{{ var.value.tlswlgo3_youtube_apikey }}'
+        }
     )
