@@ -7,7 +7,7 @@ from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 from airflow.providers.postgres.hooks.postgres import PostgresHook
 
 # Configuration
-SEOUL_API_KEY = "43434e536b776f6137326e4e664152" # <--- [변경 필요] 1번 키
+SEOUL_API_KEY = "434459696c6f6b6b3130347378545273" # <--- [변경 필요] 1번 키
 TARGET_LINES = [
     "1호선", "2호선", "3호선", "4호선", "5호선",
     "6호선", "7호선", "8호선", "9호선",
@@ -22,7 +22,7 @@ default_args = dict(
 with DAG(
     dag_id="woals24952495_subway_test_1815", # <--- [테스트 시간 변경]  
     start_date=pendulum.today('Asia/Seoul').add(days=-1),
-    schedule="50-59 18 * * *",  # 18:50 ~ 18:59 매분 실행 (10분간)
+    schedule="58-59 18 * * *",  # 18:58 ~ 18:59 매분 실행
     catchup=False,
     default_args=default_args,
     tags=['subway', 'project', 'woals24952495'], # <--- [변경 완료]
