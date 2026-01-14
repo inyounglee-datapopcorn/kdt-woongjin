@@ -14,15 +14,15 @@ TARGET_LINES = [
     "경의중앙선", "공항철도", "수인분당선", "경춘선"
 ]
 default_args = dict(
-    owner = 'woals24952495', # <--- [변경 완료]
+    owner = 'woals24952495', # <--- [변경 완료]   
     email = ['woals24952495@naver.com'], # <--- [변경 완료] (임의 설정)
     email_on_failure = False,
     retries = 1
 ) 
 with DAG(
-    dag_id="woals24952495_subway_test_1815", # <--- [테스트 시간 변경]
+    dag_id="woals24952495_subway_test_1815", # <--- [테스트 시간 변경]  
     start_date=pendulum.today('Asia/Seoul').add(days=-1),
-    schedule="45-59 18 * * *",  # 18:45 ~ 18:59 매분 실행 (15분간)
+    schedule="50-59 18 * * *",  # 18:50 ~ 18:59 매분 실행 (10분간)
     catchup=False,
     default_args=default_args,
     tags=['subway', 'project', 'woals24952495'], # <--- [변경 완료]
