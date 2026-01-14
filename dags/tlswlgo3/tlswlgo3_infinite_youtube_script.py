@@ -44,9 +44,15 @@ def run_my_crawler(api_key):
     results = []
     for item in stats_response.get('items', []):
         results.append({
+            'channel_id': item['snippet']['channelId'],
+            'video_id': item['id'],
             'title': item['snippet']['title'],
+            'description': item['snippet']['description'],
+            'thumbnail_url': item['snippet']['thumbnails']['high']['url'],
             'view_count': item['statistics'].get('viewCount', '0'),
             'like_count': item['statistics'].get('likeCount', '0'),
+            'comment_count': item['statistics'].get('commentCount', '0'),
+            'published_at': item['snippet']['publishedAt'],
             'collected_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         })
 
@@ -57,6 +63,8 @@ def run_my_crawler(api_key):
     # 5. [중요] 가장 최신 영상 ID를 책갈피로 저장
     with open(LAST_ID_FILE, 'w', encoding='utf-8') as f:
         f.write(new_video_ids[0])
+
+    return results
 
 if __name__ == "__main__":
     # 서버 환경용이므로 단독 실행 시에는 환경 변수 등을 활용하도록 구성 가능
