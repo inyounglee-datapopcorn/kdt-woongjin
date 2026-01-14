@@ -84,8 +84,8 @@ with DAG(
         # 수신자 이메일을 직접 입력(하드코딩)합니다.
         to=['qoxjf135@gmail.com', 'kate29397@gmail.com'], 
         subject='[알림] 유튜브 데이터 수집 완료 (오후 16시 정기 실행)',
-        # 발송용 SMTP 서버는 'mail_connection' 설정을 사용합니다.
-        conn_id='qoxjf135_gmail_connection',
+        # 발송용 SMTP 서버는 'qoxjf135_gmail_connection' 설정을 사용합니다.
+        smtp_conn_id='qoxjf135_gmail_conn',
         html_content="""
         <h3>유튜브 트렌드 수집이 완료되었습니다.</h3>
         <p>데이터가 DB에 안전하게 저장되었습니다.</p>
