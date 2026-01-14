@@ -31,7 +31,7 @@ def load_to_supabase(**context):
     # 스키마 및 테이블 생성
     create_schema_query = "CREATE SCHEMA IF NOT EXISTS tlswlgo3;"
     create_table_query = """
-    CREATE TABLE IF NOT EXISTS tlswlgo3.infinite_challenge_youtube_videos (
+    CREATE TABLE IF NOT EXISTS tlswlgo3.youtube_videos (
         video_id TEXT PRIMARY KEY,
         channel_id TEXT,
         title TEXT,
@@ -66,7 +66,7 @@ def load_to_supabase(**context):
     
     # 데이터 적재
     pg_hook.insert_rows(
-        table='tlswlgo3.infinite_challenge_youtube_videos',
+        table='tlswlgo3.youtube_videos',
         rows=rows,
         target_fields=[
             'video_id', 'channel_id', 'title', 'description', 'thumbnail_url', 
