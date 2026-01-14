@@ -19,7 +19,7 @@ default_args = {
     'depends_on_past': False,
     'start_date': datetime(2024, 1, 1),
     'email_on_failure': False, # 실패 시 자동 메일 발송 기능 (비활성화)
-    'email_on_retry': False,We 
+    'email_on_retry': False,
     'retries': 1,  # 실패하면 1번 더 시도합니다.
     'retry_delay': timedelta(minutes=5),  # 재시도 전 5분 동안 기다립니다.
 }
