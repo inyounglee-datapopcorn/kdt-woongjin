@@ -18,7 +18,7 @@ default_args = dict(
     email = ['woals24952495@naver.com'], # <--- [변경 완료] (임의 설정)
     email_on_failure = False,
     retries = 1
-)
+) 
 with DAG(
     dag_id="woals24952495_seoul_subway_ffff", # <--- [변경 완료]
     start_date=pendulum.today('Asia/Seoul').add(days=-1),
