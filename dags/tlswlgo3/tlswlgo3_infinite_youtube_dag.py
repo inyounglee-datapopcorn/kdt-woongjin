@@ -28,9 +28,10 @@ def load_to_supabase(**context):
     # 사용자 요청에 따른 conn_id 사용
     pg_hook = PostgresHook(postgres_conn_id='tlswlgo3_supabase_conn')
     
-    # 테이블이 없으면 생성
+    # 스키마 및 테이블 생성
+    create_schema_query = "CREATE SCHEMA IF NOT EXISTS tlswlgo3;"
     create_table_query = """
-    CREATE TABLE IF NOT EXISTS infinite_challenge_youtube_videos (
+    CREATE TABLE IF NOT EXISTS tlswlgo3.infinite_challenge_youtube_videos (
         video_id TEXT PRIMARY KEY,
         channel_id TEXT,
         title TEXT,
@@ -43,6 +44,7 @@ def load_to_supabase(**context):
         collected_at TIMESTAMP
     );
     """
+    pg_hook.run(create_schema_query)
     pg_hook.run(create_table_query)
     
     # 데이터 삽입을 위한 튜플 리스트 작성
@@ -64,7 +66,7 @@ def load_to_supabase(**context):
     
     # 데이터 적재
     pg_hook.insert_rows(
-        table='infinite_challenge_youtube_videos',
+        table='tlswlgo3.infinite_challenge_youtube_videos',
         rows=rows,
         target_fields=[
             'video_id', 'channel_id', 'title', 'description', 'thumbnail_url', 
@@ -73,7 +75,7 @@ def load_to_supabase(**context):
         replace=True,  # video_id가 같은 데이터가 있으면 업데이트 (UPSERT 효과)
         replace_index=['video_id']
     )
-    print(f"{len(rows)}개의 데이터를 Supabase(Postgres)에 적재(Upsert) 완료했습니다.")
+    print(f"{len(rows)}개의 데이터를 Supabase(Postgres) tlswlgo3 스키마에 적재(Upsert) 완료했습니다.")
 
 default_args = {
     'owner': 'tlswlgo3',

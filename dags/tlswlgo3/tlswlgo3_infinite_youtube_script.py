@@ -4,8 +4,8 @@ import json
 from datetime import datetime
 
 # Airflow 환경에서 파일 위치 보장을 위해 절대 경로 사용
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-LAST_ID_FILE = os.path.join(BASE_DIR, 'last_video_id.txt')
+# Airflow 서버 환경의 DAG 디렉토리는 쓰기 권한이 없으므로 /tmp 폴더를 사용합니다.
+LAST_ID_FILE = '/tmp/tlswlgo3_last_video_id.txt'
 PLAYLIST_ID = 'PL1FPDVeoyuPfSTmRCEjr2GGOTnNqE_mnn'
 
 def run_my_crawler(api_key):
