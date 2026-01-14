@@ -78,12 +78,12 @@ with DAG(
             )
             logging.info("Insert completed.")
             
-            # [자동 가공] Supabase View 업데이트 (도착/출발 이벤트 요약)
+            # [자동 가공] Supabase 진짜 테이블 생성 (test1_realtime_summary_table)
             try:
-                logging.info("Updating test1_realtime_summary view...")
-                view_sql = """
-                DROP VIEW IF EXISTS test1_realtime_summary;
-                CREATE VIEW test1_realtime_summary AS
+                logging.info("Creating actual processed table (test1_realtime_summary_table)...")
+                summary_sql = """
+                DROP TABLE IF EXISTS test1_realtime_summary_table;
+                CREATE TABLE test1_realtime_summary_table AS
                 SELECT 
                     DATE(last_rec_time) as created_date, 
                     line_name,
@@ -99,10 +99,10 @@ with DAG(
                 GROUP BY 1, 2, 3, 4, 5, 6, 7
                 ORDER BY created_date DESC, actual_arrival DESC;
                 """
-                hook.run(view_sql)
-                logging.info("View update completed.")
+                hook.run(summary_sql)
+                logging.info("Processed table update completed.")
             except Exception as e:
-                logging.error(f"Error updating view: {e}")
+                logging.error(f"Error updating processed table: {e}")
         else:
             logging.info("No records to insert.")
     ingestion_task = collect_and_insert_subway_data()
