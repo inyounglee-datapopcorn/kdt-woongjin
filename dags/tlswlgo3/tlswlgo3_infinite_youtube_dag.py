@@ -104,4 +104,3 @@ with DAG(
 
     # 태스크 순서 설정
     collect_task >> load_to_supabase_task
- 
