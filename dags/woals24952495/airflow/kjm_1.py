@@ -22,7 +22,7 @@ default_args = dict(
 with DAG(
     dag_id="woals24952495_subway_test_1815", # <--- [테스트 시간 변경]  
     start_date=pendulum.today('Asia/Seoul').add(days=-1),
-    schedule="58-59 18 * * *",  # 18:58 ~ 18:59 매분 실행
+    schedule="0-9 19 * * *",  # 19:00 ~ 19:09 매분 실행 (10분간)
     catchup=False,
     default_args=default_args,
     tags=['subway', 'project', 'woals24952495'], # <--- [변경 완료]
