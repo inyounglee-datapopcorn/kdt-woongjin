@@ -11,13 +11,27 @@ sys.path.append(os.path.dirname(__file__))
 from tlswlgo3_infinite_youtube_script import run_my_crawler
 
 def collect_youtube_data_task(**context):
-    # Airflow 3 SDK 방식에 맞게 변수를 가져옵니다.
+    import os
     from airflow.sdk import Variable
-    try:
-        api_key = Variable.get("tlswlgo3_youtube_apikey")
-    except Exception as e:
-        print(f"Airflow Variable 'tlswlgo3_youtube_apikey'를 찾을 수 없습니다. 에러: {e}")
-        raise
+    
+    # 1. 환경변수 우선 확인 (Airflow 설정 방식)
+    api_key = os.environ.get('AIRFLOW_VAR_TLSWLGO3_YOUTUBE_APIKEY')
+    
+    if not api_key:
+        try:
+            # 2. SDK를 통한 변수 가져오기 (소문자)
+            api_key = Variable.get("tlswlgo3_youtube_apikey")
+        except Exception:
+            try:
+                # 3. SDK를 통한 변수 가져오기 (대문자 관례)
+                api_key = Variable.get("TLSWLGO3_YOUTUBE_APIKEY")
+            except Exception as e:
+                # 디버깅을 위해 현재 환경의 Airflow 관련 변수 목록 출력
+                airflow_vars = [k for k in os.environ if k.startswith('AIRFLOW_VAR')]
+                print(f"에러: 'tlswlgo3_youtube_apikey'를 찾을 수 없습니다.")
+                print(f"현재 인식 가능한 환경변수 목록: {airflow_vars}")
+                raise e
+                
     return run_my_crawler(api_key=api_key)
 
 def load_to_supabase(**context):
