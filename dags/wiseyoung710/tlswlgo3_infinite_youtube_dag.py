@@ -84,7 +84,7 @@ default_args = {
 }
 
 with DAG(
-    dag_id='tlswlgo3_infinite_challenge_youtube_dag',
+    dag_id='tlswlgo3_infinite_youtube_dag',
     default_args=default_args,
     description='유튜브 데이터 1회성 수집 및 Supabase 적재',
     schedule='@once', 
