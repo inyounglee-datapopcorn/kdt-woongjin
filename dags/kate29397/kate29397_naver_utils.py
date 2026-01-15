@@ -7,41 +7,31 @@ from urllib.parse import quote
 import os
 import sys
 import io
-from supabase import create_client, Client
-from airflow.hooks.base import BaseHook
+from airflow.providers.postgres.hooks.postgres import PostgresHook
 
 # 한글 출력 깨짐 방지
 if sys.stdout.encoding != 'utf-8':
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
 class SupabaseManager:
-    """데이터베이스(Supabase)와 소통하는 담당자 클래스"""
+    """데이터베이스(Supabase/Postgres)와 소통하는 담당자 클래스 (Direct SQL 사용)"""
     def __init__(self, conn_id='supabase_conn'):
-        # Airflow Connection에서 Supabase 접속 정보 가져오기
-        try:
-            conn = BaseHook.get_connection(conn_id)
-            url = conn.host
-            key = conn.password
-            
-            # 필수 정보가 없으면 에러 발생
-            if not url or not key:
-                raise ValueError(f"[!] Airflow Connection '{conn_id}'에 URL 또는 Key가 설정되어 있는지 확인해주세요.")
-
-            # Supabase 클라이언트 생성   
-            self.supabase: Client = create_client(url, key)
-        except Exception as e:
-            raise ValueError(f"[!] Airflow Connection '{conn_id}'를 불러오는 중 오류 발생: {e}")
+        # Airflow PostgresHook 초기화
+        self.pg_hook = PostgresHook(postgres_conn_id=conn_id)
 
     def insert_blog_trend(self, data):
-        """네이버 블로그 트렌드 데이터를 naver_blog_trends 테이블에 삽입/업데이트"""
+        """네이버 블로그 트렌드 데이터를 naver_blog_trends 테이블에 삽입/업데이트 (SQL 사용)"""
+        sql = """
+            INSERT INTO naver_blog_trends (date, keyword, total_count)
+            VALUES (%s, %s, %s)
+            ON CONFLICT (date, keyword)
+            DO UPDATE SET
+                total_count = EXCLUDED.total_count;
+        """
+        params = (data['date'], data['keyword'], data['total_count'])
+        
         try:
-            # upsert : 데이터가 있으면 업데이트, 없으면 삽입
-            # on_conflict : date와 keyword가 같으면 중복으로 판단
-            response = self.supabase.table("naver_blog_trends").upsert(
-                data,
-                on_conflict="date,keyword"
-            ).execute()
-            return response
+            self.pg_hook.run(sql, parameters=params)
         except Exception as e:
             print(f"[!] DB 저장 중 오류 발생 ({data.get('date', 'unknown')}): {e}")
             return None
