@@ -1,5 +1,4 @@
-from airflow import DAG  # Airflow의 핵심인 DAG(작업 흐름)를 만드는 도구
-from airflow.providers.standard.operators.python import PythonOperator  # 파이썬 코드를 실행하는 담당자
+from airflow.operators.email import EmailOperator # 이메일 발송 담당자
 from datetime import datetime, timedelta
 import sys
 import os
@@ -36,10 +35,11 @@ def naver_blog_crawling_task(keywords, ds, conn_id='supabase_conn', **kwargs):
 
 # [C] 기본 설정: DAG의 기본 속성을 정의합니다.
 default_args = {
-    'owner': 'airflow',
+    'owner': 'kate29397',
     'depends_on_past': False,
     'start_date': datetime(2024, 1, 1),
-    'email_on_failure': False,
+    'email': ['kate29397@gmail.com'], # 알림을 받을 이메일 주소
+    'email_on_failure': True, # 실패 시에도 알림 받기
     'email_on_retry': False,
     'retries': 1,
     'retry_delay': timedelta(minutes=5),
@@ -66,5 +66,20 @@ with DAG(
         },
     )
 
-    # 작업 순서 (단일 작업이므로 그대로 나열)
-    crawl_task
+    # 2번 작업: 작업 완료 이메일 알림 보내기
+    send_email = EmailOperator(
+        task_id='send_success_email',
+        to='kate29397@gmail.com',
+        subject='[Airflow] 네이버 블로그 크롤링 작업 완료 ({{ ds }})',
+        html_content="""
+            <h3>네이버 블로그 크롤링 작업이 성공적으로 완료되었습니다.</h3>
+            <ul>
+                <li><strong>실행 기준일:</strong> {{ ds }}</li>
+                <li><strong>수집 결과:</strong> {{ task_instance.xcom_pull(task_ids='run_naver_blog_crawling') }}</li>
+            </ul>
+            <p>본 메일은 Airflow 자동화 흐름에 의해 생성되었습니다.</p>
+        """,
+    )
+
+    # 작업 순서: 크롤링 완료 후 이메일 발송
+    crawl_task >> send_email
