@@ -53,10 +53,12 @@ def collect_and_save_data(**kwargs):
     Collects data from YouTube API and saves strictly defined fields to Supabase.
     searches for '무한도전', combines results by viewCount and date to cover popular and recent.
     """
-    api_key = Variable.get("tlswlgo3_youtube_apikey", default_var=None)
+    # Try to get the Variable, but fallback to a default if necessary (User should set the Variable)
+    api_key = Variable.get("tlswlgo3_youtube_apikey", default_var="AIzaSyD5prc5qQKqpXTXV_L1enxHUCnauKlUMHI")
+    
     if not api_key:
-        # Fallback to hardcoded key if Variable is missing, though previous turn used hardcoded
-        api_key
+        raise ValueError("YouTube API Key is missing. Please set the Airflow Variable 'tlswlgo3_youtube_apikey'.")
+
     logging.info("Starting data collection...")
 
     # We will fetch a mix of popular and recent videos to build the archive
@@ -79,8 +81,12 @@ def collect_and_save_data(**kwargs):
         params_pop = common_params.copy()
         params_pop['order'] = 'viewCount'
         resp_pop = requests.get(base_url, params=params_pop, timeout=10).json()
-        for item in resp_pop.get('items', []):
-            video_ids.add(item['id']['videoId'])
+        
+        if 'error' in resp_pop:
+            logging.error(f"YouTube API Error (Popular): {resp_pop['error']}")
+        else:
+            for item in resp_pop.get('items', []):
+                video_ids.add(item['id']['videoId'])
     except Exception as e:
         logging.error(f"Error fetching popular videos: {e}")
 
@@ -90,13 +96,17 @@ def collect_and_save_data(**kwargs):
         params_date = common_params.copy()
         params_date['order'] = 'date'
         resp_date = requests.get(base_url, params=params_date, timeout=10).json()
-        for item in resp_date.get('items', []):
-            video_ids.add(item['id']['videoId'])
+        
+        if 'error' in resp_date:
+            logging.error(f"YouTube API Error (Recent): {resp_date['error']}")
+        else:
+            for item in resp_date.get('items', []):
+                video_ids.add(item['id']['videoId'])
     except Exception as e:
         logging.error(f"Error fetching recent videos: {e}")
 
     if not video_ids:
-        logging.info("No video IDs found.")
+        logging.info("No video IDs found. Check API Key or Quota.")
         return
 
     # Fetch Details (Statistics)
@@ -113,6 +123,9 @@ def collect_and_save_data(**kwargs):
     
     try:
         stats_resp = requests.get(stats_url, params=stats_params, timeout=10).json()
+        if 'error' in stats_resp:
+            logging.error(f"YouTube API Error (Stats): {stats_resp['error']}")
+            raise Exception(f"YouTube API Error: {stats_resp['error']}")
     except Exception as e:
         logging.error(f"Error fetching video details: {e}")
         raise
@@ -121,21 +134,24 @@ def collect_and_save_data(**kwargs):
     
     for item in stats_resp.get('items', []):
         try:
+            snippet = item.get('snippet', {})
+            statistics = item.get('statistics', {})
+            
             row = (
                 item['id'],                                         # video_id
-                item['snippet']['channelId'],                       # channel_id
-                item['snippet'].get('channelTitle', ''),            # channel_title
-                item['snippet']['description'],                     # description
-                item['snippet']['thumbnails']['high']['url'],       # thumbnail_url
-                int(item['statistics'].get('viewCount', 0)),        # view_count
-                int(item['statistics'].get('likeCount', 0)),        # like_count
-                int(item['statistics'].get('commentCount', 0)),     # comment_count
-                item['snippet']['publishedAt'],                     # published_at
+                snippet.get('channelId', ''),                       # channel_id
+                snippet.get('channelTitle', ''),                    # channel_title
+                snippet.get('description', ''),                     # description
+                snippet.get('thumbnails', {}).get('high', {}).get('url', ''), # thumbnail_url
+                int(statistics.get('viewCount', 0)),                # view_count
+                int(statistics.get('likeCount', 0)),                # like_count
+                int(statistics.get('commentCount', 0)),             # comment_count
+                snippet.get('publishedAt'),                         # published_at
                 datetime.now().strftime('%Y-%m-%d %H:%M:%S')        # collected_at
             )
             processed_rows.append(row)
-        except KeyError as e:
-            logging.warning(f"Skipping item {item.get('id')} due to missing key: {e}")
+        except Exception as e:
+            logging.warning(f"Skipping item {item.get('id')} due to error: {e}")
 
     if not processed_rows:
         logging.info("No rows to insert.")
