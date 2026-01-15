@@ -9,7 +9,7 @@ dag_path = os.path.dirname(os.path.abspath(__file__))
 if dag_path not in sys.path:
     sys.path.append(dag_path)
 
-from naver_utils import NaverBlogCrawler
+from kate29397_naver_utils import NaverBlogCrawler
 
 # [B] 실제 실행될 파이썬 함수 정의
 def naver_blog_crawling_task(keywords, ds, conn_id='supabase_conn', **kwargs):
