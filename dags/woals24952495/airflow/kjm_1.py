@@ -5,9 +5,9 @@ from airflow import DAG
 from airflow.decorators import task
 from airflow.providers.postgres.hooks.postgres import PostgresHook
 
-# [설정] 본인이 보유한 4개의 API 키 리스트
+# [설정] API 키 리스트
 API_KEYS = [
-    "54684a47546f683435384d714c6e71", # 1번 키 (최신)
+    "54684a47546f683435384d714c6e71", # 1번 키 
     "434459696c6f6b6b3130347378545273", # 2번 키
     "6e71466270636b733633654f6b4a7a", # 3번 키
     "43434e536b776f6137326e4e664152"  # 4번 키
@@ -26,41 +26,37 @@ default_args = dict(
 ) 
 
 with DAG(
-    dag_id="woals24952495_subway_smart_collector", # 통합 DAG ID
-    start_date=pendulum.datetime(2026, 1, 15, 5, 30, tz='Asia/Seoul'), # 1월 15일 새벽 05시 30분 정각에 시작
-    schedule="* * * * *",  # 15일 05시 30분부터 중단 없이 매분 계속 실행
+    dag_id="woals24952495_subway_smart_collector",
+    start_date=pendulum.datetime(2026, 1, 15, 5, 30, tz='Asia/Seoul'),
+    schedule="* * * * *",
     catchup=False,
     default_args=default_args,
-    tags=['subway', 'project', 'multi_key'],
+    tags=['subway', 'project', 'debug_mode'],
 ) as dag:
 
     @task(task_id='collect_with_key_rotation')
     def collect_with_key_rotation():
         hook = PostgresHook(postgres_conn_id='jaemin1077_supabase_conn')
         conn = hook.get_sqlalchemy_engine()
-        
         all_records = []
-        working_key_index = 0 # 사용할 키 인덱스
         
         for line in TARGET_LINES:
-            success_for_this_line = False
+            success = False
+            logging.info(f"--- Fetching {line} ---")
             
-            # 현재 키부터 마지막 키까지 시도
-            for i in range(working_key_index, len(API_KEYS)):
-                current_key = API_KEYS[i]
+            for i, key in enumerate(API_KEYS):
                 try:
-                    url = f"http://swopenapi.seoul.go.kr/api/subway/{current_key}/json/realtimePosition/1/100/{line}"
-                    response = requests.get(url)
-                    data = response.json()
+                    url = f"http://swopenapi.seoul.go.kr/api/subway/{key}/json/realtimePosition/1/100/{line}"
+                    res = requests.get(url, timeout=10)
                     
-                    # 용량 초과(ERROR-290) 또는 인증 오류(INFO-100) 체크
-                    if 'RESULT' in data and data['RESULT']['CODE'] in ['ERROR-290', 'INFO-100']:
-                        logging.warning(f"Key {i+1} failed ({data['RESULT']['CODE']}). Trying next key...")
-                        working_key_index = i + 1 # 다음 키로 인덱스 업데이트
-                        continue 
+                    if res.status_code != 200:
+                        logging.warning(f"  [Key {i+1}] HTTP {res.status_code} Error. Trying next...")
+                        continue
+
+                    data = res.json()
+                    res_code = data.get('RESULT', {}).get('CODE', 'INFO-000')
                     
-                    # 정상 데이터인 경우
-                    if 'realtimePositionList' in data:
+                    if res_code == 'INFO-000' and 'realtimePositionList' in data:
                         items = data['realtimePositionList']
                         for item in items:
                             all_records.append({
@@ -75,25 +71,32 @@ with DAG(
                                 "dest_station_id": item.get("statnTid"),
                                 "dest_station_name": item.get("statnTnm")
                             })
-                        logging.info(f"{line}: Found {len(items)} trains using Key {i+1}")
+                        logging.info(f"  [Key {i+1}] Success! Found {len(items)} trains.")
+                        success = True
+                        break
                     
-                    success_for_this_line = True
-                    break # 성공했으므로 다음 호선으로 넘어감
+                    elif res_code == 'INFO-200':
+                        logging.info(f"  [Key {i+1}] No trains on this line. (OK)")
+                        success = True
+                        break
                     
+                    else:
+                        logging.warning(f"  [Key {i+1}] API Error: {res_code}. Trying next...")
+                        continue
+
                 except Exception as e:
-                    logging.error(f"Error with Key {i+1} for {line}: {e}")
+                    logging.error(f"  [Key {i+1}] Unexpected Exception: {e}")
                     continue
             
-            if not success_for_this_line:
-                logging.error(f"!!! CRITICAL: All keys failed for {line} !!!")
+            if not success:
+                logging.error(f"  !!! All keys failed for {line} !!!")
 
-        # 데이터 적재
         if all_records:
             import pandas as pd
             df = pd.DataFrame(all_records)
             df.to_sql('final_realtime_subway', con=conn, if_exists='append', index=False, method='multi')
-            logging.info(f"Successfully inserted {len(all_records)} records.")
+            logging.info(f"Final: Successfully inserted {len(all_records)} records.")
         else:
-            logging.warning("No data collected in this run.")
+            logging.error("Final: No data collected from any line using any key.")
 
     collect_with_key_rotation()
