@@ -47,7 +47,7 @@ default_args = {
 
 # [D] DAG 정의: 작업의 이름, 실행 시간(스케줄) 등을 설정합니다.
 with DAG(
-    'naver_blog_crawler_dag',  # Airflow 화면에 나타날 DAG의 고유 이름
+    'kate29397_naver_blog_crawler_dag',  # Airflow 화면에 나타날 DAG의 고유 이름
     default_args=default_args,
     description='네이버 블로그 트렌드 데이터를 수집하는 자동화 흐름',
     schedule='0 16 * * *',  # 매일 16시마다 자동으로 실행
