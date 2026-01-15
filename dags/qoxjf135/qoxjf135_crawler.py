@@ -11,7 +11,7 @@ class YouTubeTrendCrawler:
         #    이 키는 유튜브 데이터를 빌려 쓰기 위한 '출입증' 같은 것입니다.
         self.api_key = Variable.get("QOXJF135_YOUTUBE_API_KEY")
         if not self.api_key:
-            raise ValueError("[!] Airflow Variable에 'qoxjf135_youtube_api_key'가 없습니다. 설정을 확인해 주세요.")
+            raise ValueError("[!] Airflow Variable에 'QOXJF135_YOUTUBE_API_KEY'가 없습니다. 설정을 확인해 주세요.")
         
         # 2. 유튜브 API 서비스와 연결합니다. (버전 3 사용)
         self.youtube = build("youtube", "v3", developerKey=self.api_key)
@@ -100,7 +100,7 @@ class YouTubeTrendCrawler:
         # 인기 키워드의 경우 30일치 데이터가 이 제한을 넘으면 과거 데이터가 잘릴 수 있으므로,
         # 안전하게 1일 단위로 나누어 수집하도록 수정합니다.
         while current_end >= start_date:
-            current_start = max(start_date, current_end - timedelta(days=15))
+            current_start = max(start_date, current_end - timedelta(days=5))
             print(f"[*] 기간 수집 중: {current_start.strftime('%Y-%m-%d')} ~ {current_end.strftime('%Y-%m-%d')}...")
             
             period_data = self.get_metrics_for_period(keyword, current_start, current_end)
