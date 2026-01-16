@@ -7,7 +7,7 @@ from airflow.providers.postgres.hooks.postgres import PostgresHook
 
 # [설정] API 키 리스트
 API_KEYS = [
-    "54684a47546f683435384d714c6e71", # 1번 키 
+    "54684a47546f683435384d714c6e71", # 1번 키
     "434459696c6f6b6b3130347378545273", # 2번 키
     "6e71466270636b733633654f6b4a7a", # 3번 키
     "43434e536b776f6137326e4e664152", # 4번 키
@@ -53,7 +53,7 @@ with DAG(
             success = False
             logging.info(f"--- Fetching {line} ---")
             
-            # [키 로테이션 루프] 현재 호선에 대해 성공할 때까지 1번~4번 키를 순서대로 꺼내어 시도합니다.
+            # [키 로테이션 루프] 현재 호선에 대해 성공할 때까지 1번~12번 키를 순서대로 꺼내어 시도합니다.
             for i, key in enumerate(API_KEYS):
                 try:
                     url = f"http://swopenapi.seoul.go.kr/api/subway/{key}/json/realtimePosition/1/100/{line}"
@@ -83,6 +83,7 @@ with DAG(
                             })
                         logging.info(f"  [Key {i+1}] Success! Found {len(items)} trains.")
                         success = True
+                        # [STEP 4] 수집 성공: 다음 호선으로 이동 (불필요한 키 호출 방지로 리소스 최적화)
                         break # [로테이션 중단] 성공했으므로 현재 키 시도를 멈추고 다음 호선으로 넘어갑니다. (다음 호선은 다시 1번 키부터)
                     
                     elif res_code == 'INFO-200':
